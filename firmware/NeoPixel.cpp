@@ -15,7 +15,6 @@
 #include <assert.h>
 #include <mbed.h>
 #include "GPDMA.h"
-#include "Interlocked.h"
 #include "NeoPixel.h"
 
 
@@ -261,7 +260,7 @@ int NeoPixel::dmaInterruptHandler(uint32_t dmaInterruptStatus)
         }
 
         // The SPI transmit channel triggered an interupt. This will release client coding waiting in set() method.
-        interlockedIncrement(&m_frameCount);
+       m_frameCount++;
 
         // Clear the terminal count interrupt for this channel.
         LPC_GPDMA->DMACIntTCClear = m_channelMask;
