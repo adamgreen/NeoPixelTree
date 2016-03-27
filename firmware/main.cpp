@@ -88,15 +88,15 @@ int main()
 
 static void updateAnimation()
 {
-    static Animation         animation;
-    static TwinkleAnimation  twinkle;
-    static TwinkleProperties twinkleProperties;
-    static RGBData           pixels1[LED_COUNT];
-    static RGBData           pixels2[LED_COUNT];
-    static RGBData           pixels3[LED_COUNT];
-    static RGBData           pixels4[LED_COUNT];
-    static RGBData           pixels5[LED_COUNT];
-    static AnimationKeyFrame keyFrames[5];
+    static Animation<LED_COUNT>        animation;
+    static TwinkleAnimation<LED_COUNT> twinkle;
+    static TwinkleProperties           twinkleProperties;
+    static RGBData                     pixels1[LED_COUNT];
+    static RGBData                     pixels2[LED_COUNT];
+    static RGBData                     pixels3[LED_COUNT];
+    static RGBData                     pixels4[LED_COUNT];
+    static RGBData                     pixels5[LED_COUNT];
+    static AnimationKeyFrame           keyFrames[5];
 
     switch (g_currAnimation)
     {
@@ -105,7 +105,7 @@ static void updateAnimation()
             RGBData pattern[] = { WHITE };
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -114,7 +114,7 @@ static void updateAnimation()
             RGBData pattern[] = { RED };
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -123,7 +123,7 @@ static void updateAnimation()
             RGBData pattern[] = { GREEN };
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -132,7 +132,7 @@ static void updateAnimation()
             RGBData pattern[] = { RED, GREEN };
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -141,7 +141,7 @@ static void updateAnimation()
             RGBData pattern[] = { RED, GREEN, WHITE };
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -150,7 +150,7 @@ static void updateAnimation()
             RGBData pattern[] = { RED, DARK_ORANGE, YELLOW, GREEN, BLUE };
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -162,7 +162,7 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 250, false};
             keyFrames[1] = {pixels2, 250, false};
-            animation.setKeyFrames(keyFrames, 2, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -177,7 +177,7 @@ static void updateAnimation()
             keyFrames[0] = {pixels1, 250, false};
             keyFrames[1] = {pixels2, 250, false};
             keyFrames[2] = {pixels3, 250, false};
-            animation.setKeyFrames(keyFrames, 3, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 3);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -198,7 +198,7 @@ static void updateAnimation()
             keyFrames[2] = {pixels3, 250, false};
             keyFrames[3] = {pixels4, 250, false};
             keyFrames[4] = {pixels5, 250, false};
-            animation.setKeyFrames(keyFrames, 5, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 5);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -210,7 +210,7 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
             keyFrames[1] = {pixels2, 1000, true};
-            animation.setKeyFrames(keyFrames, 2, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -222,7 +222,7 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
             keyFrames[1] = {pixels2, 1000, true};
-            animation.setKeyFrames(keyFrames, 2, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -234,7 +234,7 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
             keyFrames[1] = {pixels2, 1000, true};
-            animation.setKeyFrames(keyFrames, 2, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -246,7 +246,7 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 250, true};
             keyFrames[1] = {pixels2, 250, true};
-            animation.setKeyFrames(keyFrames, 2, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -261,7 +261,7 @@ static void updateAnimation()
             keyFrames[0] = {pixels1, 250, true};
             keyFrames[1] = {pixels2, 250, true};
             keyFrames[2] = {pixels3, 250, true};
-            animation.setKeyFrames(keyFrames, 3, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 3);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -282,7 +282,7 @@ static void updateAnimation()
             keyFrames[2] = {pixels3, 250, true};
             keyFrames[3] = {pixels4, 250, true};
             keyFrames[4] = {pixels5, 250, true};
-            animation.setKeyFrames(keyFrames, 5, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 5);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -294,13 +294,12 @@ static void updateAnimation()
             createInterpolatedPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, pattern1);
             keyFrames[0] = {pixels1, 1000, true};
             keyFrames[1] = {pixels2, 1000, true};
-            animation.setKeyFrames(keyFrames, 2, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
     case Twinkle_White:
         {
-            twinkleProperties.pixelCount = LED_COUNT;
             twinkleProperties.lifetimeMin = 128;
             twinkleProperties.lifetimeMax = 250;
             twinkleProperties.probability = 250;
@@ -316,7 +315,6 @@ static void updateAnimation()
         }
     case Twinkle_Red:
         {
-            twinkleProperties.pixelCount = LED_COUNT;
             twinkleProperties.lifetimeMin = 128;
             twinkleProperties.lifetimeMax = 250;
             twinkleProperties.probability = 250;
@@ -332,7 +330,6 @@ static void updateAnimation()
         }
     case Twinkle_Green:
         {
-            twinkleProperties.pixelCount = LED_COUNT;
             twinkleProperties.lifetimeMin = 128;
             twinkleProperties.lifetimeMax = 250;
             twinkleProperties.probability = 250;
@@ -348,7 +345,6 @@ static void updateAnimation()
         }
     case Twinkle_AnyColor:
         {
-            twinkleProperties.pixelCount = LED_COUNT;
             twinkleProperties.lifetimeMin = 128;
             twinkleProperties.lifetimeMax = 250;
             twinkleProperties.probability = 250;
@@ -367,7 +363,7 @@ static void updateAnimation()
             RGBData pattern = BLACK;
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), &pattern, 1);
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
-            animation.setKeyFrames(keyFrames, 1, LED_COUNT);
+            animation.setKeyFrames(keyFrames, 1);
             g_pPixelUpdate = &animation;
             break;
         }

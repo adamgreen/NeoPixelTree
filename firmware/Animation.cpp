@@ -18,7 +18,7 @@
 
 
 // powf(255.0f, (float)x / 255.0);
-uint8_t Animation::s_powerTable[256] =
+uint8_t AnimationBase::s_powerTable[256] =
 {
       1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
       1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
@@ -39,7 +39,7 @@ uint8_t Animation::s_powerTable[256] =
 };
 
 // log2f((float)x)/log2f(255.0f)*255.0f
-uint8_t Animation::s_logTable[256] =
+uint8_t AnimationBase::s_logTable[256] =
 {
       0,   0,  31,  50,  63,  74,  82,  89,  95, 101, 105, 110, 114, 118, 121, 124, 
     127, 130, 133, 135, 137, 140, 142, 144, 146, 148, 149, 151, 153, 154, 156, 158, 
@@ -63,7 +63,7 @@ uint8_t Animation::s_logTable[256] =
 static unsigned int posRand();
 
 
-Animation::Animation()
+AnimationBase::AnimationBase()
 {
     m_pStart = NULL;
     m_pEnd = NULL;
@@ -78,27 +78,18 @@ Animation::Animation()
     m_timer.start();
 }
 
-void Animation::setKeyFrames(const AnimationKeyFrame* pFrames, size_t frameCount, size_t pixelCount)
+void AnimationBase::setKeyFrames(const AnimationKeyFrame* pFrames, size_t frameCount)
 {
     m_pStart = pFrames;
     m_pEnd = pFrames + frameCount;
     m_pCurr = pFrames;
     m_pInterpolating = NULL;
-    m_pixelCount = pixelCount;
-    // UNDONE: Make this template based.
-    m_pRgbPixels = (RGBData*)realloc(m_pRgbPixels, sizeof(*m_pRgbPixels) * pixelCount);
-    m_pHsvPrev = (HSVData*)realloc(m_pHsvPrev, sizeof(*m_pHsvPrev) * pixelCount);
-    m_pHsvNext = (HSVData*)realloc(m_pHsvNext, sizeof(*m_pHsvNext) * pixelCount);
-    assert ( m_pRgbPixels );
-    assert ( m_pHsvPrev );
-    assert ( m_pHsvNext );
-
     m_timer.reset();
     m_lastRenderTime = 0xFFFFFFFF;
     m_dirty = true;
 }
 
-void Animation::updatePixels(NeoPixel& ledControl)
+void AnimationBase::updatePixels(NeoPixel& ledControl)
 {
     if (m_timer.read_ms() > m_pCurr->millisecondsBeforeNextFrame)
     {
@@ -121,7 +112,7 @@ void Animation::updatePixels(NeoPixel& ledControl)
     }
 }
 
-void Animation::updatePixelsNonInterpolated(NeoPixel& ledControl)
+void AnimationBase::updatePixelsNonInterpolated(NeoPixel& ledControl)
 {
     if (m_dirty)
     {
@@ -130,7 +121,7 @@ void Animation::updatePixelsNonInterpolated(NeoPixel& ledControl)
     }
 }
 
-void Animation::updatePixelsInterpolated(NeoPixel& ledControl)
+void AnimationBase::updatePixelsInterpolated(NeoPixel& ledControl)
 {
     if (m_pCurr != m_pInterpolating)
     {
@@ -159,7 +150,7 @@ void Animation::updatePixelsInterpolated(NeoPixel& ledControl)
     }
 }
 
-void Animation::convertRgbPixelsToHsv(HSVData* pHsvDest, const RGBData* pRgbSrc, size_t pixelCount)
+void AnimationBase::convertRgbPixelsToHsv(HSVData* pHsvDest, const RGBData* pRgbSrc, size_t pixelCount)
 {
     while (pixelCount--)
     {
@@ -167,7 +158,7 @@ void Animation::convertRgbPixelsToHsv(HSVData* pHsvDest, const RGBData* pRgbSrc,
     }
 }
 
-void Animation::rgbToInterpolatableHsv(HSVData* pHsvDest, const RGBData* pRgbSrc)
+void AnimationBase::rgbToInterpolatableHsv(HSVData* pHsvDest, const RGBData* pRgbSrc)
 {
     rgbToHsv(pHsvDest, pRgbSrc);
 
@@ -176,7 +167,7 @@ void Animation::rgbToInterpolatableHsv(HSVData* pHsvDest, const RGBData* pRgbSrc
     pHsvDest->value = s_logTable[pHsvDest->value];
 }
 
-void Animation::interpolateBetweenKeyFrames(int32_t currTime, int32_t totalTime)
+void AnimationBase::interpolateBetweenKeyFrames(int32_t currTime, int32_t totalTime)
 {
     const HSVData* pPrev = m_pHsvPrev;
     const HSVData* pNext = m_pHsvNext;
@@ -188,7 +179,7 @@ void Animation::interpolateBetweenKeyFrames(int32_t currTime, int32_t totalTime)
     }
 }
 
-void Animation::interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvStart, const HSVData* pHsvStop,
+void AnimationBase::interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvStart, const HSVData* pHsvStop,
                                     int32_t curr, int32_t total)
 {
     HSVData interpolated;
@@ -213,36 +204,29 @@ void Animation::interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvStart,
 
 
 
-TwinkleAnimation::TwinkleAnimation()
+TwinkleAnimationBase::TwinkleAnimationBase()
 {
     m_pProperties = NULL;
     m_pRgbPixels = NULL;
     m_pHsvPixels = NULL;
     m_pTwinkleInfo = NULL;
+    m_pixelCount = 0;
     m_lastUpdate = -1;
     m_timer.start();
 }
 
-void TwinkleAnimation::setProperties(const TwinkleProperties* pProperties)
+void TwinkleAnimationBase::setProperties(const TwinkleProperties* pProperties)
 {
     m_pProperties = pProperties;
-    // UNDONE: Put into template.
-    m_pRgbPixels = (RGBData*)realloc(m_pRgbPixels, sizeof(*m_pRgbPixels) * pProperties->pixelCount);
-    m_pHsvPixels = (HSVData*)realloc(m_pHsvPixels, sizeof(*m_pHsvPixels) * pProperties->pixelCount);
-    m_pTwinkleInfo = (PixelTwinkleInfo*)realloc(m_pTwinkleInfo, sizeof(*m_pTwinkleInfo) * pProperties->pixelCount);
-    assert ( m_pRgbPixels );
-    assert ( m_pHsvPixels );
-    assert ( m_pTwinkleInfo );
-
-    memset(m_pRgbPixels, 0, sizeof(*m_pRgbPixels) * pProperties->pixelCount);
-    memset(m_pHsvPixels, 0, sizeof(*m_pHsvPixels) * pProperties->pixelCount);
-    memset(m_pTwinkleInfo, 0, sizeof(*m_pTwinkleInfo) * pProperties->pixelCount);
+    memset(m_pRgbPixels, 0, sizeof(*m_pRgbPixels) * m_pixelCount);
+    memset(m_pHsvPixels, 0, sizeof(*m_pHsvPixels) * m_pixelCount);
+    memset(m_pTwinkleInfo, 0, sizeof(*m_pTwinkleInfo) * m_pixelCount);
 
     m_lastUpdate = -1;
     m_timer.reset();
 }
 
-void TwinkleAnimation::updatePixels(NeoPixel& ledControl)
+void TwinkleAnimationBase::updatePixels(NeoPixel& ledControl)
 {
     int32_t currTime = m_timer.read_ms();
     if (m_lastUpdate == currTime)
@@ -254,7 +238,7 @@ void TwinkleAnimation::updatePixels(NeoPixel& ledControl)
 
     // Animate twinkles already in progress.
     HSVData* pHsvPixel = m_pHsvPixels;
-    HSVData* pEnd = m_pHsvPixels + m_pProperties->pixelCount;
+    HSVData* pEnd = m_pHsvPixels + m_pixelCount;
     RGBData* pRgbPixel = m_pRgbPixels;
     PixelTwinkleInfo* pInfo = m_pTwinkleInfo;
     while (pHsvPixel < pEnd)
@@ -266,17 +250,17 @@ void TwinkleAnimation::updatePixels(NeoPixel& ledControl)
     if (posRand() % m_pProperties->probability != 0)
     {
         // Don't need to start another twinkle at this time.
-        ledControl.set(m_pRgbPixels, m_pProperties->pixelCount);
+        ledControl.set(m_pRgbPixels, m_pixelCount);
         return;
     }
 
     // Pick the pixel to twinkle.
-    int pixelToTwinkle = posRand() % m_pProperties->pixelCount;
+    int pixelToTwinkle = posRand() % m_pixelCount;
     pInfo = &m_pTwinkleInfo[pixelToTwinkle];
     if (pInfo->lifetime != 0)
     {
         // Don't bother since it is already in the process of twinkling.
-        ledControl.set(m_pRgbPixels, m_pProperties->pixelCount);
+        ledControl.set(m_pRgbPixels, m_pixelCount);
         return;
     }
 
@@ -301,7 +285,7 @@ void TwinkleAnimation::updatePixels(NeoPixel& ledControl)
     pRgbPixel = &m_pRgbPixels[pixelToTwinkle];
     hsvToRgb(pRgbPixel, &hsvStart);
 
-    ledControl.set(m_pRgbPixels, m_pProperties->pixelCount);
+    ledControl.set(m_pRgbPixels, m_pixelCount);
 }
 
 static unsigned int posRand()
@@ -309,7 +293,7 @@ static unsigned int posRand()
     return (unsigned int)rand();
 }
 
-void TwinkleAnimation::twinklePixel(RGBData* pRgbDest,
+void TwinkleAnimationBase::twinklePixel(RGBData* pRgbDest,
                                     const HSVData* pHsv,
                                     PixelTwinkleInfo* pInfo,
                                     uint32_t currTime)
@@ -335,7 +319,7 @@ void TwinkleAnimation::twinklePixel(RGBData* pRgbDest,
             HSVData hsvStart = *pHsv;
             HSVData hsvStop = *pHsv;
             hsvStart.value = 8;
-            Animation::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
+            AnimationBase::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
         }
     }
 
@@ -353,6 +337,6 @@ void TwinkleAnimation::twinklePixel(RGBData* pRgbDest,
         HSVData hsvStart = *pHsv;
         HSVData hsvStop = *pHsv;
         hsvStop.value = 8;
-        Animation::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
+        AnimationBase::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
     }
 }

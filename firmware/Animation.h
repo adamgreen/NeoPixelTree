@@ -33,12 +33,11 @@ public:
     virtual void updatePixels(NeoPixel& ledControl) = 0;
 };
 
-class Animation : public IPixelUpdate
+class AnimationBase : public IPixelUpdate
 {
 public:
-    Animation();
 
-    void setKeyFrames(const AnimationKeyFrame* pFrames, size_t frameCount, size_t pixelCount);
+    void setKeyFrames(const AnimationKeyFrame* pFrames, size_t frameCount);
 
     // IPixelUpdate methods.
     virtual void updatePixels(NeoPixel& ledControl);
@@ -48,6 +47,8 @@ public:
     static void interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvStart, const HSVData* pHsvStop,
                                     int32_t curr, int32_t total);
 protected:
+    AnimationBase();
+
     void updatePixelsNonInterpolated(NeoPixel& ledControl);
     void updatePixelsInterpolated(NeoPixel& ledControl);
     void convertRgbPixelsToHsv(HSVData* pHsvDest, const RGBData* pRgbSrc, size_t pixelCount);
@@ -68,10 +69,28 @@ protected:
     bool                     m_dirty;
 };
 
+template <size_t PIXEL_COUNT>
+class Animation : public AnimationBase
+{
+public:
+    Animation()
+    {
+        m_pRgbPixels = m_rgbPixels;
+        m_pHsvPrev = m_hsvPrevPixels;
+        m_pHsvNext = m_hsvNextPixels;
+        m_pixelCount = PIXEL_COUNT;
+    }
+
+protected:
+    RGBData m_rgbPixels[PIXEL_COUNT];
+    HSVData m_hsvPrevPixels[PIXEL_COUNT];
+    HSVData m_hsvNextPixels[PIXEL_COUNT];
+};
+
+
+
 struct TwinkleProperties
 {
-    // The number of pixels in NeoPixel strip.
-    size_t   pixelCount;
     // The twinkle should fade in and out in this number of milliseconds.
     uint32_t lifetimeMin;
     uint32_t lifetimeMax;
@@ -86,10 +105,9 @@ struct TwinkleProperties
     uint8_t  valueMax;
 };
 
-class TwinkleAnimation : public IPixelUpdate
+class TwinkleAnimationBase : public IPixelUpdate
 {
 public:
-    TwinkleAnimation();
 
     void setProperties(const TwinkleProperties* pProperties);
 
@@ -97,6 +115,8 @@ public:
     virtual void updatePixels(NeoPixel& ledControl);
 
 protected:
+    TwinkleAnimationBase();
+
     struct PixelTwinkleInfo
     {
         uint32_t startTime;
@@ -109,9 +129,29 @@ protected:
     RGBData*                 m_pRgbPixels;
     HSVData*                 m_pHsvPixels;
     PixelTwinkleInfo*        m_pTwinkleInfo;
+    size_t                   m_pixelCount;
     Timer                    m_timer;
     int32_t                  m_lastUpdate;
 };
+
+template <size_t PIXEL_COUNT>
+class TwinkleAnimation : public TwinkleAnimationBase
+{
+public:
+    TwinkleAnimation()
+    {
+        m_pixelCount = PIXEL_COUNT;
+        m_pRgbPixels = m_rgbPixels;
+        m_pHsvPixels = m_hsvPixels;
+        m_pTwinkleInfo = m_twinkleInfo;
+    }
+
+protected:
+    RGBData          m_rgbPixels[PIXEL_COUNT];
+    HSVData          m_hsvPixels[PIXEL_COUNT];
+    PixelTwinkleInfo m_twinkleInfo[PIXEL_COUNT];
+};
+
 
 
 static inline void createRepeatingPixelPattern(RGBData* pDest, size_t destPixelCount,
@@ -139,12 +179,12 @@ static inline void createInterpolatedPixelPattern(RGBData* pDest, size_t destPix
     HSVData hsvStart;
     HSVData hsvStop;
 
-    Animation::rgbToInterpolatableHsv(&hsvStart, pRgbStart);
-    Animation::rgbToInterpolatableHsv(&hsvStop, pRgbStop);
+    AnimationBase::rgbToInterpolatableHsv(&hsvStart, pRgbStart);
+    AnimationBase::rgbToInterpolatableHsv(&hsvStop, pRgbStop);
 
     for (int32_t i = 0 ; i < totalPixels ; i++)
     {
-        Animation::interpolateHsvToRgb(pDest++, &hsvStart, &hsvStop, i, totalPixels);
+        AnimationBase::interpolateHsvToRgb(pDest++, &hsvStart, &hsvStop, i, totalPixels);
     }
 }
 
