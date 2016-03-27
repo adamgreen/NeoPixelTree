@@ -33,9 +33,6 @@ int main()
     timer.start();
     lastFrameCount = ledControl.getFrameCount();
 
-    // UNDONE:
-    leds[3] = {0, 0, 0x80};
-    ledControl.set(leds);
     while(1)
     {
 
