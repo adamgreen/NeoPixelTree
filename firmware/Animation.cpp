@@ -60,6 +60,9 @@ uint8_t Animation::s_logTable[256] =
 };
 
 
+static unsigned int posRand();
+
+
 Animation::Animation()
 {
     m_pStart = NULL;
@@ -205,4 +208,151 @@ void Animation::interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvStart,
     interpolated.value = s_powerTable[newValue];
 
     hsvToRgb(pRgbDest, &interpolated);
+}
+
+
+
+
+TwinkleAnimation::TwinkleAnimation()
+{
+    m_pProperties = NULL;
+    m_pRgbPixels = NULL;
+    m_pHsvPixels = NULL;
+    m_pTwinkleInfo = NULL;
+    m_lastUpdate = -1;
+    m_timer.start();
+}
+
+void TwinkleAnimation::setProperties(const TwinkleProperties* pProperties)
+{
+    m_pProperties = pProperties;
+    // UNDONE: Put into template.
+    m_pRgbPixels = (RGBData*)realloc(m_pRgbPixels, sizeof(*m_pRgbPixels) * pProperties->pixelCount);
+    m_pHsvPixels = (HSVData*)realloc(m_pHsvPixels, sizeof(*m_pHsvPixels) * pProperties->pixelCount);
+    m_pTwinkleInfo = (PixelTwinkleInfo*)realloc(m_pTwinkleInfo, sizeof(*m_pTwinkleInfo) * pProperties->pixelCount);
+    assert ( m_pRgbPixels );
+    assert ( m_pHsvPixels );
+    assert ( m_pTwinkleInfo );
+
+    memset(m_pRgbPixels, 0, sizeof(*m_pRgbPixels) * pProperties->pixelCount);
+    memset(m_pHsvPixels, 0, sizeof(*m_pHsvPixels) * pProperties->pixelCount);
+    memset(m_pTwinkleInfo, 0, sizeof(*m_pTwinkleInfo) * pProperties->pixelCount);
+
+    m_lastUpdate = -1;
+    m_timer.reset();
+}
+
+void TwinkleAnimation::updatePixels(NeoPixel& ledControl)
+{
+    int32_t currTime = m_timer.read_ms();
+    if (m_lastUpdate == currTime)
+    {
+        // Only do any work once each millisecond.
+        return;
+    }
+    m_lastUpdate = currTime;
+
+    // Animate twinkles already in progress.
+    HSVData* pHsvPixel = m_pHsvPixels;
+    HSVData* pEnd = m_pHsvPixels + m_pProperties->pixelCount;
+    RGBData* pRgbPixel = m_pRgbPixels;
+    PixelTwinkleInfo* pInfo = m_pTwinkleInfo;
+    while (pHsvPixel < pEnd)
+    {
+        twinklePixel(pRgbPixel++, pHsvPixel++, pInfo++, currTime);
+    }
+
+    // Randomly start twinkling pixels.
+    if (posRand() % m_pProperties->probability != 0)
+    {
+        // Don't need to start another twinkle at this time.
+        ledControl.set(m_pRgbPixels, m_pProperties->pixelCount);
+        return;
+    }
+
+    // Pick the pixel to twinkle.
+    int pixelToTwinkle = posRand() % m_pProperties->pixelCount;
+    pInfo = &m_pTwinkleInfo[pixelToTwinkle];
+    if (pInfo->lifetime != 0)
+    {
+        // Don't bother since it is already in the process of twinkling.
+        ledControl.set(m_pRgbPixels, m_pProperties->pixelCount);
+        return;
+    }
+
+    // Configure this pixel for twinkling.
+    uint32_t lifetimeDelta = m_pProperties->lifetimeMax - m_pProperties->lifetimeMin;
+    pInfo->lifetime = m_pProperties->lifetimeMin + (lifetimeDelta ? posRand() % lifetimeDelta : 0);
+    pInfo->startTime = currTime;
+    pInfo->isGettingBrighter = true;
+
+    pHsvPixel = &m_pHsvPixels[pixelToTwinkle];
+    uint8_t hueDelta = m_pProperties->hueMax - m_pProperties->hueMin;
+    uint8_t saturationDelta = m_pProperties->saturationMax - m_pProperties->saturationMin;
+    uint8_t valueDelta = m_pProperties->valueMax - m_pProperties->valueMin;
+
+    pHsvPixel->hue = m_pProperties->hueMin + (hueDelta ? posRand() % hueDelta : 0);
+    pHsvPixel->saturation = m_pProperties->saturationMin + (saturationDelta ? posRand() % saturationDelta : 0);
+    pHsvPixel->value = m_pProperties->valueMin + (valueDelta ? posRand() % valueDelta : 0);
+
+    // Set RGB pixel value to match starting colour.
+    HSVData hsvStart = *pHsvPixel;
+    hsvStart.value = 8;
+    pRgbPixel = &m_pRgbPixels[pixelToTwinkle];
+    hsvToRgb(pRgbPixel, &hsvStart);
+
+    ledControl.set(m_pRgbPixels, m_pProperties->pixelCount);
+}
+
+static unsigned int posRand()
+{
+    return (unsigned int)rand();
+}
+
+void TwinkleAnimation::twinklePixel(RGBData* pRgbDest,
+                                    const HSVData* pHsv,
+                                    PixelTwinkleInfo* pInfo,
+                                    uint32_t currTime)
+{
+    if (pInfo->lifetime == 0)
+    {
+        // This pixel isn't twinkling so just return.
+        return;
+    }
+
+    uint32_t deltaTime = currTime - pInfo->startTime;
+    if (pInfo->isGettingBrighter)
+    {
+        if (deltaTime > pInfo->lifetime)
+        {
+            // Time to start dimming down.
+            pInfo->isGettingBrighter = false;
+            pInfo->startTime = currTime;
+            deltaTime = 0;
+        }
+        else
+        {
+            HSVData hsvStart = *pHsv;
+            HSVData hsvStop = *pHsv;
+            hsvStart.value = 8;
+            Animation::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
+        }
+    }
+
+    // Check explicitly for opposite direction since the direction of fade might have been reversed inside of
+    // above conditional when it has already reached maximum brightness.
+    if (!pInfo->isGettingBrighter)
+    {
+        if (deltaTime > pInfo->lifetime)
+        {
+            // The twinkle is complete so flag it as being so and turn LED off.
+            pInfo->lifetime = 0;
+            *pRgbDest = { 0, 0, 0 };
+            return;
+        }
+        HSVData hsvStart = *pHsv;
+        HSVData hsvStop = *pHsv;
+        hsvStop.value = 8;
+        Animation::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
+    }
 }

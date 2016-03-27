@@ -27,14 +27,23 @@ struct AnimationKeyFrame
     bool     interpolateBetweenFrames;
 };
 
-class Animation
+class IPixelUpdate
+{
+public:
+    virtual void updatePixels(NeoPixel& ledControl) = 0;
+};
+
+class Animation : public IPixelUpdate
 {
 public:
     Animation();
 
     void setKeyFrames(const AnimationKeyFrame* pFrames, size_t frameCount, size_t pixelCount);
-    void updatePixels(NeoPixel& ledControl);
 
+    // IPixelUpdate methods.
+    virtual void updatePixels(NeoPixel& ledControl);
+
+    // Static methods used together to interpolate colour values.
     static void rgbToInterpolatableHsv(HSVData* pHsvDest, const RGBData* pRgbSrc);
     static void interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvStart, const HSVData* pHsvStop,
                                     int32_t curr, int32_t total);
@@ -59,6 +68,50 @@ protected:
     bool                     m_dirty;
 };
 
+struct TwinkleProperties
+{
+    // The number of pixels in NeoPixel strip.
+    size_t   pixelCount;
+    // The twinkle should fade in and out in this number of milliseconds.
+    uint32_t lifetimeMin;
+    uint32_t lifetimeMax;
+    // There should be a 1 in probability milliseconds chance of a twinkle starting.
+    int      probability;
+    // The colour of the twinkling LED should be constrained to these HSV limits.
+    uint8_t  hueMin;
+    uint8_t  hueMax;
+    uint8_t  saturationMin;
+    uint8_t  saturationMax;
+    uint8_t  valueMin;
+    uint8_t  valueMax;
+};
+
+class TwinkleAnimation : public IPixelUpdate
+{
+public:
+    TwinkleAnimation();
+
+    void setProperties(const TwinkleProperties* pProperties);
+
+    // IPixelUpdate methods.
+    virtual void updatePixels(NeoPixel& ledControl);
+
+protected:
+    struct PixelTwinkleInfo
+    {
+        uint32_t startTime;
+        uint32_t lifetime;
+        bool     isGettingBrighter;
+    };
+    void twinklePixel(RGBData* pRgbDest, const HSVData* pHsv, PixelTwinkleInfo* pInfo, uint32_t currTime);
+
+    const TwinkleProperties* m_pProperties;
+    RGBData*                 m_pRgbPixels;
+    HSVData*                 m_pHsvPixels;
+    PixelTwinkleInfo*        m_pTwinkleInfo;
+    Timer                    m_timer;
+    int32_t                  m_lastUpdate;
+};
 
 
 static inline void createRepeatingPixelPattern(RGBData* pDest, size_t destPixelCount,
