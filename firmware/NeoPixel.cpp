@@ -155,8 +155,10 @@ void NeoPixel::start()
     m_isStarted = true;
 }
 
-void NeoPixel::set(const RGBData* pRGB)
+void NeoPixel::set(const RGBData* pPixels, size_t pixelCount)
 {
+    assert ( pixelCount == m_ledCount );
+
     waitForNextFlipToComplete();
 
     uint32_t bufferToUpdate = !(m_frameCount & 1);
@@ -164,7 +166,7 @@ void NeoPixel::set(const RGBData* pRGB)
     m_pEmitBuffer = m_pFrontBuffers[bufferToUpdate];
     for (uint32_t i = 0 ; i < m_ledCount ; i++)
     {
-        RGBData led = *pRGB++;
+        RGBData led = *pPixels++;
 
         emitByte(led.red);
         emitByte(led.green);

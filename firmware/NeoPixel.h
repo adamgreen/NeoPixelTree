@@ -16,16 +16,8 @@
 #define NEO_PIXEL_H_
 
 #include <mbed.h>
+#include "Pixel.h"
 #include "GPDMA.h"
-
-
-// The RGB data for each LED is packed into this structure.
-struct RGBData
-{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-};
 
 
 class NeoPixel : public SPI
@@ -36,7 +28,7 @@ public:
 
     uint32_t getFrameCount();
     void     start();
-    void     set(const RGBData* pRGB);
+    void     set(const RGBData* pPixels, size_t pixelCount);
 
 protected:
     void setConstantBitsInFrontBuffers();
