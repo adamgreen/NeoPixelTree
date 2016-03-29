@@ -37,9 +37,13 @@ NeoPixel::NeoPixel(uint32_t ledCount, PinName outputPin) : SPI(outputPin, NC, NC
     format(8, 3);
     frequency(10000000);
 
-    m_frameCount = 0;
+    m_flipCount = 0;
     m_isStarted = false;
     m_ledCount = ledCount;
+    m_backBufferState = BackBufferFree;
+    m_backBufferId = 0;
+    m_frontBufferIds[0] = 0;
+    m_frontBufferIds[0] = 0;
 
     // Round up byte count.
     uint32_t ledBits = ledCount * bitsPerPixel * spiBitsPerNeoPixelBit;
@@ -51,28 +55,32 @@ NeoPixel::NeoPixel(uint32_t ledCount, PinName outputPin) : SPI(outputPin, NC, NC
     // Place buffers used by DMA code in separate RAM bank to optimize performance.
     m_pFrontBuffers[0] = (uint8_t*)dmaHeap0Alloc(m_packetSize);
     m_pFrontBuffers[1] = (uint8_t*)dmaHeap1Alloc(m_packetSize);
-    m_isBufferContentsNew[0] = false;
-    m_isBufferContentsNew[1] = false;
+    m_pBackBuffer = (uint8_t*)malloc(m_packetSize);
 
-    setConstantBitsInFrontBuffers();
+    setConstantBitsInBuffers();
 
     // Setup GPDMA module.
     enableGpdmaPower();
     enableGpdmaInLittleEndianMode();
 
     // Add this DMA handler to the linked list of DMA handlers.
-    m_dmaHandler.handler = __dmaInterruptHandler;
+    m_dmaHandler.handler = __spiTransmitInterruptHandler;
     m_dmaHandler.pContext = (void*)this;
     addDmaInterruptHandler(&m_dmaHandler);
+
+    // Initialize the DMA mem copy callback structure;
+    m_dmaMemCopyCallback.handler = __memCopyCompleteHandler;
+    m_dmaMemCopyCallback.pContext = (void*)this;
 }
 
-void NeoPixel::setConstantBitsInFrontBuffers()
+void NeoPixel::setConstantBitsInBuffers()
 {
-    setConstantBitsInFrontBuffer(m_pFrontBuffers[0]);
-    setConstantBitsInFrontBuffer(m_pFrontBuffers[1]);
+    setConstantBitsInBuffer(m_pBackBuffer);
+    memcpy(m_pFrontBuffers[0], m_pBackBuffer, m_packetSize);
+    memcpy(m_pFrontBuffers[1], m_pBackBuffer, m_packetSize);
 }
 
-void NeoPixel::setConstantBitsInFrontBuffer(uint8_t* pBuffer)
+void NeoPixel::setConstantBitsInBuffer(uint8_t* pBuffer)
 {
     // Each NeoPixel bit will be represented in 12 SPI bits.
     // The format of the 12 SPI bits will be:
@@ -99,26 +107,29 @@ void NeoPixel::setConstantBitsInFrontBuffer(uint8_t* pBuffer)
 NeoPixel::~NeoPixel()
 {
     if (m_isStarted)
+    {
         freeDmaChannel(m_channelTx);
+    }
     removeDmaInterruptHandler(&m_dmaHandler);
-}
-
-uint32_t NeoPixel::getFrameCount()
-{
-    return m_frameCount;
+    uninitDmaMemCopy();
 }
 
 void NeoPixel::start()
 {
+    if (m_isStarted)
+    {
+        return;
+    }
+
     // Allocate DMA channel for transmitting.
     m_channelTx = allocateDmaChannel(GPDMA_CHANNEL_LOW);
     m_pChannelTx = dmaChannelFromIndex(m_channelTx);
     m_sspTx = (_spi.spi == (LPC_SSP_TypeDef*)SPI_1) ? DMA_PERIPHERAL_SSP1_TX : DMA_PERIPHERAL_SSP0_TX;
 
     // Clear error and terminal complete interrupts for transmit channel.
-    m_channelMask = 1 << m_channelTx;
-    LPC_GPDMA->DMACIntTCClear = m_channelMask;
-    LPC_GPDMA->DMACIntErrClr  = m_channelMask;
+    uint32_t channelMask = 1 << m_channelTx;
+    LPC_GPDMA->DMACIntTCClear = channelMask;
+    LPC_GPDMA->DMACIntErrClr  = channelMask;
 
     // Prepare transmit channel DMA circular linked list to use 2 front buffers.
     m_dmaListItems[0].DMACCxSrcAddr  = (uint32_t)m_pFrontBuffers[0];
@@ -159,11 +170,10 @@ void NeoPixel::set(const RGBData* pPixels, size_t pixelCount)
 {
     assert ( pixelCount == m_ledCount );
 
-    waitForNextFlipToComplete();
+    waitForFreeBackBuffer();
 
-    uint32_t bufferToUpdate = !(m_frameCount & 1);
-    // Emit bits into the front buffer not currently being sent over SPI.
-    m_pEmitBuffer = m_pFrontBuffers[bufferToUpdate];
+    // Emit bits into the now free back buffer.
+    m_pEmitBuffer = m_pBackBuffer;
     for (uint32_t i = 0 ; i < m_ledCount ; i++)
     {
         RGBData led = *pPixels++;
@@ -172,19 +182,30 @@ void NeoPixel::set(const RGBData* pPixels, size_t pixelCount)
         emitByte(led.green);
         emitByte(led.blue);
     }
-    m_isBufferContentsNew[bufferToUpdate] = true;
+
+    // Let the DMA interrupt handler know that the back buffer is now ready to be copied into the next free
+    // front buffer.
+    m_backBufferId++;
+    m_backBufferState = BackBufferReadyToCopy;
+
+    m_setCount++;
 }
 
-void NeoPixel::waitForNextFlipToComplete()
+void NeoPixel::waitForFreeBackBuffer()
 {
-    uint32_t lastFrame = m_frameCount;
-
-    // Would hang forever if DMA operations haven't been started yet so just return.
+    // Might hang forever if DMA operations haven't been started yet so just return.
     if (!m_isStarted)
         return;
 
-    while (m_frameCount == lastFrame)
+    while (m_backBufferState != BackBufferFree)
     {
+        // Don't hit the memory bus too hard querying m_backBufferState while other DMA operations are running against
+        // the main SRAM bank.
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
     }
 }
 
@@ -240,37 +261,67 @@ void NeoPixel::emitByte(uint8_t byte)
     m_pEmitBuffer++;
 }
 
-int NeoPixel::__dmaInterruptHandler(void* pContext, uint32_t dmaInterruptStatus)
+uint32_t NeoPixel::__spiTransmitInterruptHandler(void* pContext, uint32_t dmaInterruptStatus)
 {
     NeoPixel* pThis = (NeoPixel*)pContext;
 
-    return pThis->dmaInterruptHandler(dmaInterruptStatus);
+    return pThis->spiTransmitInterruptHandler(dmaInterruptStatus);
 }
 
-int NeoPixel::dmaInterruptHandler(uint32_t dmaInterruptStatus)
+uint32_t NeoPixel::spiTransmitInterruptHandler(uint32_t dmaInterruptStatus)
 {
-    if (dmaInterruptStatus & m_channelMask)
+    uint32_t txChannelMask = 1 << m_channelTx;
+
+    if ((dmaInterruptStatus & txChannelMask) == 0)
     {
-        // If front buffer that was just sent is older than one to be sent next, copy in the newer contents so that
-        // we don't flicker between older and newer value if client app doesn't set on every frame flip.
-        uint32_t bufferJustSent = m_frameCount & 1;
-        uint32_t bufferToSendNext = !bufferJustSent;
-        if (m_isBufferContentsNew[bufferJustSent] == false && m_isBufferContentsNew[bufferToSendNext] == true)
-        {
-            memcpy(m_pFrontBuffers[bufferJustSent], m_pFrontBuffers[bufferToSendNext], m_packetSize);
-            m_isBufferContentsNew[bufferToSendNext] = false;
-        }
-
-        // The SPI transmit channel triggered an interupt. This will release client coding waiting in set() method.
-       m_frameCount++;
-
-        // Clear the terminal count interrupt for this channel.
-        LPC_GPDMA->DMACIntTCClear = m_channelMask;
-
-        // Interrupt was handled.
-        return 1;
+        return 0;
     }
 
-    // Didn't handle this DMA interrupt.
-    return 0;
+    // Handle flipping from one front buffer to the other.
+    // Determine which of the front buffers was just rendered and which one is just starting to render.
+    uint32_t bufferJustSent = m_flipCount & 1;
+    uint32_t bufferToSendNext = !bufferJustSent;
+
+    if (m_backBufferState == BackBufferReadyToCopy)
+    {
+        // There is a new back buffer to copy into the front buffer.
+        m_backBufferState = BackBufferCopying;
+        int usedDma = dmaMemCopy(m_pFrontBuffers[bufferJustSent], m_pBackBuffer, m_packetSize, &m_dmaMemCopyCallback);
+        assert ( usedDma );
+        (void)usedDma;
+        m_frontBufferIds[bufferJustSent] = m_backBufferId;
+    }
+    else if (m_frontBufferIds[bufferJustSent] != m_frontBufferIds[bufferToSendNext])
+    {
+        // Copy newer frame buffer into this older/stale one.
+        int usedDma = dmaMemCopy(m_pFrontBuffers[bufferJustSent],
+                                 m_pFrontBuffers[bufferToSendNext],
+                                 m_packetSize,
+                                 &m_dmaMemCopyCallback);
+        assert ( usedDma );
+        (void)usedDma;
+        m_frontBufferIds[bufferJustSent] = m_frontBufferIds[bufferToSendNext];
+    }
+
+    m_flipCount++;
+
+    // Flag that we have handled this interrupt.
+    LPC_GPDMA->DMACIntTCClear = txChannelMask;
+    return txChannelMask;
+}
+
+void NeoPixel::__memCopyCompleteHandler(void* pContext)
+{
+    NeoPixel* pThis = (NeoPixel*)pContext;
+
+    pThis->memCopyCompleteHandler();
+}
+
+void NeoPixel::memCopyCompleteHandler()
+{
+    // Let the client app know if the back buffer was just freed for it to reuse for next frame.
+    if (m_backBufferState == BackBufferCopying)
+    {
+        m_backBufferState = BackBufferFree;
+    }
 }

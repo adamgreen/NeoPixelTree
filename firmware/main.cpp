@@ -17,7 +17,10 @@
 #include "NeoPixel.h"
 
 
-#define LED_COUNT 5
+#define LED_COUNT                           5
+#define SECONDS_BETWEEN_ANIMATION_SWITCH    2
+#define DUMP_COUNTERS                       1
+
 #define ARRAY_SIZE(X) (sizeof(X)/sizeof(X[0]))
 
 // The animations that I currently have defined for this sample.
@@ -57,10 +60,12 @@ static void advanceToNextAnimation();
 
 int main()
 {
-    static DigitalOut myled(LED1);
-    static NeoPixel   ledControl(LED_COUNT, p11);
-    static Timer      timer;
-    static Timer      ledTimer;
+    uint32_t lastFlipCount = 0;
+    uint32_t lastSetCount = 0;
+    static   DigitalOut myled(LED1);
+    static   NeoPixel   ledControl(LED_COUNT, p11);
+    static   Timer      timer;
+    static   Timer      ledTimer;
 
     updateAnimation();
     ledControl.start();
@@ -71,10 +76,25 @@ int main()
     while(1)
     {
 
-        if (timer.read_ms() > 2000)
+        if (timer.read_ms() > SECONDS_BETWEEN_ANIMATION_SWITCH * 1000)
         {
+            uint32_t currSetCount = ledControl.getSetCount();
+            uint32_t setCount =  currSetCount - lastSetCount;
+            uint32_t currFlipCount = ledControl.getFlipCount();
+            uint32_t flipCount = currFlipCount - lastFlipCount;
+
+            if (DUMP_COUNTERS)
+            {
+                printf("flips: %lu/sec    sets: %lu/sec\n",
+                       flipCount / SECONDS_BETWEEN_ANIMATION_SWITCH,
+                       setCount / SECONDS_BETWEEN_ANIMATION_SWITCH);
+            }
+
             timer.reset();
             advanceToNextAnimation();
+
+            lastSetCount = currSetCount;
+            lastFlipCount = currFlipCount;
         }
         g_pPixelUpdate->updatePixels(ledControl);
 

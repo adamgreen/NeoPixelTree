@@ -26,34 +26,57 @@ public:
     NeoPixel(uint32_t ledCount, PinName outputPin);
     ~NeoPixel();
 
-    uint32_t getFrameCount();
     void     start();
     void     set(const RGBData* pPixels, size_t pixelCount);
 
+    // Number of times set() method was called.
+    uint32_t getSetCount()
+    {
+        return m_setCount;
+    }
+    // Number of times that front buffers were rendered to NeoPixel strip.
+    uint32_t getFlipCount()
+    {
+        return m_flipCount;
+    }
+
 protected:
-    void setConstantBitsInFrontBuffers();
-    void setConstantBitsInFrontBuffer(uint8_t* pBuffer);
-    void waitForNextFlipToComplete();
+    void setConstantBitsInBuffers();
+    void setConstantBitsInBuffer(uint8_t* pBuffer);
+    void waitForFreeBackBuffer();
     void emitByte(uint8_t byte);
 
-    static int __dmaInterruptHandler(void* pContext, uint32_t dmaInterruptStatus);
-    int        dmaInterruptHandler(uint32_t dmaInterruptStatus);
+    static uint32_t __spiTransmitInterruptHandler(void* pContext, uint32_t dmaInterruptStatus);
+    uint32_t        spiTransmitInterruptHandler(uint32_t dmaInterruptStatus);
+    static void     __memCopyCompleteHandler(void* pContext);
+    void            memCopyCompleteHandler();
 
-    uint8_t*                m_pFrontBuffers[2];
-    uint8_t*                m_pEmitBuffer;
-    LPC_GPDMACH_TypeDef*    m_pChannelTx;
-    DmaInterruptHandler     m_dmaHandler;
-    DmaLinkedListItem       m_dmaListItems[2];
-    volatile uint32_t       m_frameCount;
-    uint32_t                m_channelTx;
-    uint32_t                m_channelMask;
-    uint32_t                m_sspTx;
-    uint32_t                m_ledCount;
-    uint32_t                m_ledBytes;
-    uint32_t                m_packetSize;
-    bool                    m_isStarted;
-    bool                    m_isBufferContentsNew[2];
-    uint8_t                 m_dummyRead;
+    enum BackBufferState
+    {
+        BackBufferFree,
+        BackBufferCopying,
+        BackBufferReadyToCopy
+    };
+
+    uint8_t*                    m_pFrontBuffers[2];
+    uint8_t*                    m_pBackBuffer;
+    uint8_t*                    m_pEmitBuffer;
+    LPC_GPDMACH_TypeDef*        m_pChannelTx;
+    DmaInterruptHandler         m_dmaHandler;
+    DmaMemCopyCallback          m_dmaMemCopyCallback;
+    DmaLinkedListItem           m_dmaListItems[2];
+    uint32_t                    m_channelTx;
+    uint32_t                    m_sspTx;
+    uint32_t                    m_ledCount;
+    uint32_t                    m_ledBytes;
+    uint32_t                    m_packetSize;
+    uint32_t                    m_setCount;
+    volatile uint32_t           m_flipCount;
+    volatile uint32_t           m_backBufferId;
+    volatile uint32_t           m_frontBufferIds[2];
+    volatile BackBufferState    m_backBufferState;
+    bool                        m_isStarted;
+    uint8_t                     m_dummyRead;
 };
 
 #endif // NEO_PIXEL_H_

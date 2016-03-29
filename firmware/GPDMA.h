@@ -26,9 +26,15 @@
 #define DMACCxCONTROL_BURSTSIZE_64          5
 #define DMACCxCONTROL_BURSTSIZE_128         6
 #define DMACCxCONTROL_BURSTSIZE_256         7
-#define DMACCxCONTROL_I                     (1 << 31)
+#define DMACCxCONTROL_SWIDTH_SHIFT          18
+#define DMACCxCONTROL_DWIDTH_SHIFT          21
+#define DMACCxCONTROL_WIDTH_BYTE            0
+#define DMACCxCONTROL_WIDTH_HALFWORD        1
+#define DMACCxCONTROL_WIDTH_WORD            2
 #define DMACCxCONTROL_SI                    (1 << 26)
 #define DMACCxCONTROL_DI                    (1 << 27)
+#define DMACCxCONTROL_I                     (1 << 31)
+
 #define DMACCxCONFIG_ENABLE                 (1 << 0)
 #define DMACCxCONFIG_SRC_PERIPHERAL_SHIFT   1
 #define DMACCxCONFIG_DEST_PERIPHERAL_SHIFT  6
@@ -85,10 +91,17 @@ typedef enum
 
 typedef struct DmaInterruptHandler
 {
-    int (*handler)(void* pContext, uint32_t dmaInterruptStatus);
+    uint32_t (*handler)(void* pContext, uint32_t dmaInterruptStatus);
     void*                       pContext;
     struct DmaInterruptHandler* pNext;
 } DmaInterruptHandler;
+
+typedef struct DmaMemCopyCallback
+{
+    void (*handler)(void* pContext);
+    void* pContext;
+} DmaMemCopyCallback;
+
 
 static __INLINE void enableGpdmaPower(void)
 {
@@ -114,6 +127,9 @@ LPC_GPDMACH_TypeDef* dmaChannelFromIndex(int index);
 
 int                  addDmaInterruptHandler(DmaInterruptHandler* pHandler);
 int                  removeDmaInterruptHandler(DmaInterruptHandler* pHandler);
+
+int                  dmaMemCopy(void* pDest, const void* pSrc, size_t size, const DmaMemCopyCallback *pCallback);
+void                 uninitDmaMemCopy(void);
 
 // Allocated memory from AHBSRAM0 and AHBSRAM1 banks meant for DMA usage.
 // These allocations are byte aligned and can't be freed. They also don't check for out of memory.
