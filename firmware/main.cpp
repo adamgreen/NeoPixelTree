@@ -46,6 +46,7 @@ enum Animations
     Twinkle_Red,
     Twinkle_Green,
     Twinkle_AnyColor,
+    Candle_Flicker,
     Max_Animation
 };
 
@@ -111,6 +112,8 @@ static void updateAnimation()
     static Animation<LED_COUNT>        animation;
     static TwinkleAnimation<LED_COUNT> twinkle;
     static TwinkleProperties           twinkleProperties;
+    static FlickerAnimation<LED_COUNT> flicker;
+    static FlickerProperties           flickerProperties;
     static RGBData                     pixels1[LED_COUNT];
     static RGBData                     pixels2[LED_COUNT];
     static RGBData                     pixels3[LED_COUNT];
@@ -376,6 +379,18 @@ static void updateAnimation()
             twinkleProperties.valueMax = 255;
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
+            break;
+        }
+    case Candle_Flicker:
+        {
+            flickerProperties.timeMin = 2;
+            flickerProperties.timeMax = 3;
+            flickerProperties.stayBrightFactor = 2;
+            flickerProperties.brightnessMin = 128;
+            flickerProperties.brightnessMax = 255;
+            flickerProperties.baseRGBColour = DARK_ORANGE;
+            flicker.setProperties(&flickerProperties);
+            g_pPixelUpdate = &flicker;
             break;
         }
     default:

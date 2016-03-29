@@ -154,6 +154,68 @@ protected:
 
 
 
+struct FlickerProperties
+{
+    // The brightness changes should fade in and out in this number of milliseconds.
+    uint32_t        timeMin;
+    uint32_t        timeMax;
+    // How much more often should the LED just maintain maximum brightness than flickering.
+    uint32_t        stayBrightFactor;
+    uint8_t         brightnessMin;
+    uint8_t         brightnessMax;
+    RGBData         baseRGBColour;
+};
+
+class FlickerAnimationBase : public IPixelUpdate
+{
+public:
+
+    void setProperties(const FlickerProperties* pProperties);
+
+    // IPixelUpdate methods.
+    virtual void updatePixels(NeoPixel& ledControl);
+
+protected:
+    FlickerAnimationBase();
+
+    struct PixelFlickerInfo
+    {
+        uint32_t startTime;
+        uint32_t time;
+        HSVData  hsvStart;
+        HSVData  hsvStop;
+    };
+    void updatePixel(RGBData* pRgbDest, const HSVData* pHsv, PixelFlickerInfo* pInfo, uint32_t currTime);
+
+    const FlickerProperties* m_pProperties;
+    RGBData*                 m_pRgbPixels;
+    HSVData*                 m_pHsvPixels;
+    PixelFlickerInfo*        m_pFlickerInfo;
+    size_t                   m_pixelCount;
+    Timer                    m_timer;
+    int32_t                  m_lastUpdate;
+};
+
+template <size_t PIXEL_COUNT>
+class FlickerAnimation : public FlickerAnimationBase
+{
+public:
+    FlickerAnimation()
+    {
+        m_pixelCount = PIXEL_COUNT;
+        m_pRgbPixels = m_rgbPixels;
+        m_pHsvPixels = m_hsvPixels;
+        m_pFlickerInfo = m_flickerInfo;
+    }
+
+protected:
+    RGBData          m_rgbPixels[PIXEL_COUNT];
+    HSVData          m_hsvPixels[PIXEL_COUNT];
+    PixelFlickerInfo m_flickerInfo[PIXEL_COUNT];
+};
+
+
+
 static inline void createRepeatingPixelPattern(RGBData* pDest, size_t destPixelCount,
                                                const RGBData* pPattern, size_t srcPixelCount)
 {

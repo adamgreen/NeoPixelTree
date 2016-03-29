@@ -41,22 +41,22 @@ uint8_t AnimationBase::s_powerTable[256] =
 // log2f((float)x)/log2f(255.0f)*255.0f
 uint8_t AnimationBase::s_logTable[256] =
 {
-      0,   0,  31,  50,  63,  74,  82,  89,  95, 101, 105, 110, 114, 118, 121, 124, 
-    127, 130, 133, 135, 137, 140, 142, 144, 146, 148, 149, 151, 153, 154, 156, 158, 
-    159, 160, 162, 163, 164, 166, 167, 168, 169, 170, 172, 173, 174, 175, 176, 177, 
-    178, 179, 180, 180, 181, 182, 183, 184, 185, 186, 186, 187, 188, 189, 189, 190, 
-    191, 192, 192, 193, 194, 194, 195, 196, 196, 197, 198, 198, 199, 199, 200, 201, 
-    201, 202, 202, 203, 203, 204, 204, 205, 206, 206, 207, 207, 208, 208, 209, 209, 
-    210, 210, 210, 211, 211, 212, 212, 213, 213, 214, 214, 215, 215, 215, 216, 216, 
-    217, 217, 217, 218, 218, 219, 219, 219, 220, 220, 221, 221, 221, 222, 222, 222, 
-    223, 223, 223, 224, 224, 225, 225, 225, 226, 226, 226, 227, 227, 227, 228, 228, 
-    228, 229, 229, 229, 229, 230, 230, 230, 231, 231, 231, 232, 232, 232, 232, 233, 
-    233, 233, 234, 234, 234, 234, 235, 235, 235, 236, 236, 236, 236, 237, 237, 237, 
-    237, 238, 238, 238, 238, 239, 239, 239, 239, 240, 240, 240, 240, 241, 241, 241, 
-    241, 242, 242, 242, 242, 243, 243, 243, 243, 244, 244, 244, 244, 244, 245, 245, 
-    245, 245, 246, 246, 246, 246, 246, 247, 247, 247, 247, 247, 248, 248, 248, 248, 
-    249, 249, 249, 249, 249, 250, 250, 250, 250, 250, 251, 251, 251, 251, 251, 252, 
-    252, 252, 252, 252, 252, 253, 253, 253, 253, 253, 254, 254, 254, 254, 254, 255, 
+      0,   0,  31,  50,  63,  74,  82,  89,  95, 101, 105, 110, 114, 118, 121, 124,
+    127, 130, 133, 135, 137, 140, 142, 144, 146, 148, 149, 151, 153, 154, 156, 158,
+    159, 160, 162, 163, 164, 166, 167, 168, 169, 170, 172, 173, 174, 175, 176, 177,
+    178, 179, 180, 180, 181, 182, 183, 184, 185, 186, 186, 187, 188, 189, 189, 190,
+    191, 192, 192, 193, 194, 194, 195, 196, 196, 197, 198, 198, 199, 199, 200, 201,
+    201, 202, 202, 203, 203, 204, 204, 205, 206, 206, 207, 207, 208, 208, 209, 209,
+    210, 210, 210, 211, 211, 212, 212, 213, 213, 214, 214, 215, 215, 215, 216, 216,
+    217, 217, 217, 218, 218, 219, 219, 219, 220, 220, 221, 221, 221, 222, 222, 222,
+    223, 223, 223, 224, 224, 225, 225, 225, 226, 226, 226, 227, 227, 227, 228, 228,
+    228, 229, 229, 229, 229, 230, 230, 230, 231, 231, 231, 232, 232, 232, 232, 233,
+    233, 233, 234, 234, 234, 234, 235, 235, 235, 236, 236, 236, 236, 237, 237, 237,
+    237, 238, 238, 238, 238, 239, 239, 239, 239, 240, 240, 240, 240, 241, 241, 241,
+    241, 242, 242, 242, 242, 243, 243, 243, 243, 244, 244, 244, 244, 244, 245, 245,
+    245, 245, 246, 246, 246, 246, 246, 247, 247, 247, 247, 247, 248, 248, 248, 248,
+    249, 249, 249, 249, 249, 250, 250, 250, 250, 250, 251, 251, 251, 251, 251, 252,
+    252, 252, 252, 252, 252, 253, 253, 253, 253, 253, 254, 254, 254, 254, 254, 255,
 };
 
 
@@ -338,5 +338,95 @@ void TwinkleAnimationBase::twinklePixel(RGBData* pRgbDest,
         HSVData hsvStop = *pHsv;
         hsvStop.value = 8;
         AnimationBase::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
+    }
+}
+
+
+
+
+FlickerAnimationBase::FlickerAnimationBase()
+{
+    m_pProperties = NULL;
+    m_pRgbPixels = NULL;
+    m_pHsvPixels = NULL;
+    m_pFlickerInfo = NULL;
+    m_pixelCount = 0;
+    m_lastUpdate = -1;
+    m_timer.start();
+}
+
+void FlickerAnimationBase::setProperties(const FlickerProperties* pProperties)
+{
+    m_pProperties = pProperties;
+    HSVData hsvColour;
+
+    // Fill in starting HSV colour for all LEDs to be desired RGB colour but with brightness modified to maximum value.
+    rgbToHsv(&hsvColour, &pProperties->baseRGBColour);
+    hsvColour.value = pProperties->brightnessMax;
+    createRepeatingPixelPattern((RGBData*)m_pHsvPixels, m_pixelCount, (const RGBData*)&hsvColour, 1);
+
+    memset(m_pRgbPixels, 0, sizeof(*m_pRgbPixels) * m_pixelCount);
+    memset(m_pFlickerInfo, 0, sizeof(*m_pFlickerInfo) * m_pixelCount);
+
+    m_lastUpdate = -1;
+    m_timer.reset();
+}
+
+void FlickerAnimationBase::updatePixels(NeoPixel& ledControl)
+{
+    int32_t currTime = m_timer.read_ms();
+    if (m_lastUpdate == currTime)
+    {
+        // Only do any work once each millisecond.
+        return;
+    }
+    m_lastUpdate = currTime;
+
+    // Run through all LEDs and flicker them.
+    HSVData* pHsvPixel = m_pHsvPixels;
+    HSVData* pEnd = m_pHsvPixels + m_pixelCount;
+    RGBData* pRgbPixel = m_pRgbPixels;
+    PixelFlickerInfo* pInfo = m_pFlickerInfo;
+    while (pHsvPixel < pEnd)
+    {
+        updatePixel(pRgbPixel++, pHsvPixel++, pInfo++, currTime);
+    }
+
+    ledControl.set(m_pRgbPixels, m_pixelCount);
+}
+
+void FlickerAnimationBase::updatePixel(RGBData* pRgbDest,
+                                       const HSVData* pHsv,
+                                       PixelFlickerInfo* pInfo,
+                                       uint32_t currTime)
+{
+    uint32_t deltaTime = currTime - pInfo->startTime;
+    if (deltaTime > pInfo->time)
+    {
+        // Done interpolating to new brightness level. Flag that a new level should be selected.
+        pInfo->time = 0;
+    }
+    else
+    {
+        AnimationBase::interpolateHsvToRgb(pRgbDest, &pInfo->hsvStart, &pInfo->hsvStop, deltaTime, pInfo->time);
+    }
+
+    if (pInfo->time == 0)
+    {
+        // Pick a new brightnes level to interpolate towards.
+        uint32_t timeDelta = m_pProperties->timeMax - m_pProperties->timeMin;
+        pInfo->time = m_pProperties->timeMin + (timeDelta ? posRand() % timeDelta : 0);
+        pInfo->startTime = currTime;
+
+        pInfo->hsvStart = *pHsv;
+        pInfo->hsvStop = *pHsv;
+
+        // The brightness level should have a 2x chance of being brightest setting compared to other values.
+        uint32_t brightnessDelta = m_pProperties->brightnessMax - m_pProperties->brightnessMin;
+        uint32_t randValue = posRand() % (m_pProperties->stayBrightFactor * brightnessDelta);
+        pInfo->hsvStop.value = (randValue > brightnessDelta) ? m_pProperties->brightnessMax :
+                                                               m_pProperties->brightnessMin + randValue;
+
+        return;
     }
 }
