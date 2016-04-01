@@ -29,15 +29,18 @@ enum Animations
     Solid_White,
     Solid_Red,
     Solid_Green,
+    Solid_Blue_White,
     Solid_Red_Green,
     Solid_Red_Green_White,
     Solid_Red_Orange_Yellow_Green_Blue,
+    Chase_Blue_White,
     Chase_Red_Green,
     Chase_Red_Green_White,
     Chase_Red_Orange_Yellow_Green_Blue,
     Throbbing_Red,
     Throbbing_Green,
     Throbbing_White,
+    Fade_Blue_White,
     Fade_Red_Green,
     Fade_Red_Green_White,
     Fade_Red_Orange_Yellow_Green_Blue,
@@ -150,6 +153,15 @@ static void updateAnimation()
             g_pPixelUpdate = &animation;
             break;
         }
+    case Solid_Blue_White:
+        {
+            RGBData pattern[] = { BLUE, WHITE };
+            createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
+            keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
+            animation.setKeyFrames(keyFrames, 1);
+            g_pPixelUpdate = &animation;
+            break;
+        }
     case Solid_Red_Green:
         {
             RGBData pattern[] = { RED, GREEN };
@@ -174,6 +186,18 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
+            g_pPixelUpdate = &animation;
+            break;
+        }
+    case Chase_Blue_White:
+        {
+            RGBData pattern1[] = { BLUE, WHITE };
+            RGBData pattern2[] = { WHITE, BLUE };
+            createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
+            createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
+            keyFrames[0] = {pixels1, 250, false};
+            keyFrames[1] = {pixels2, 250, false};
+            animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
@@ -257,6 +281,18 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
             keyFrames[1] = {pixels2, 1000, true};
+            animation.setKeyFrames(keyFrames, 2);
+            g_pPixelUpdate = &animation;
+            break;
+        }
+    case Fade_Blue_White:
+        {
+            RGBData pattern1[] = { BLUE, WHITE };
+            RGBData pattern2[] = { WHITE, BLUE };
+            createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
+            createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
+            keyFrames[0] = {pixels1, 250, true};
+            keyFrames[1] = {pixels2, 250, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
