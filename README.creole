@@ -28,8 +28,7 @@ LEDs. The current firmware for this prototype can be found
 [[https://github.com/adamgreen/NeoPixelTree/blob/master/hardware/Prototype.sch | Eagle CAD schematic]]
 
 As can be seen in the above schematic, there aren't a lot of electronics involved with this project:
-* The [[https://www.adafruit.com/products/834 | 96MHz Cortex-M3 based mbed LPC1768 development board with 64k of RAM and
-  512k of FLASH]].
+* The [[https://www.adafruit.com/products/834 | 96MHz Cortex-M3 based mbed LPC1768 development board with 64k of RAM and 512k of FLASH]].
 * A [[http://www.digikey.com/product-detail/en/fairchild-semiconductor/BSS138/BSS138CT-ND/244294 | BSS138 N-Channel MOSFET]]
   used for converting the 3.3V serial output from the LPC1768 to the 5V expected by the **WS2812** addressable LED
   controllers in the NeoPixels.
