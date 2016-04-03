@@ -86,7 +86,7 @@ void NeoPixel::setConstantBitsInBuffer(uint8_t* pBuffer)
     // The format of the 12 SPI bits will be:
     //    1111xxxx0000
     //    xxxx will be 0000 if NeoPixel bit is 0.
-    //    xxxx will be 1111 if NeoPixel bit is 1.
+    //    xxxx will be 1110 if NeoPixel bit is 1.
     // Two NeoPixel bits will therefore be stored in 3 SPI bytes.
     //    1111xxxx 00001111 xxxx0000
     uint8_t* pEnd = pBuffer + m_ledBytes;
@@ -215,7 +215,7 @@ void NeoPixel::emitByte(uint8_t byte)
     // The format of the 12 SPI bits will be:
     //    1111xxxx0000
     //    xxxx will be 0000 if NeoPixel bit is 0.
-    //    xxxx will be 1111 if NeoPixel bit is 1.
+    //    xxxx will be 1110 if NeoPixel bit is 1.
     // Two NeoPixel bits will therefore be stored in 3 SPI bytes.
     //    1111xxxx 00001111 xxxx0000
 
