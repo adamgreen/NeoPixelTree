@@ -47,7 +47,7 @@ mbed LPC1768 does contain a current limiting IC to make sure that we don't overb
 The code for my **WS2812** driver can be found in
 [[https://github.com/adamgreen/NeoPixelTree/blob/master/firmware/NeoPixel.cpp]].  It uses the SSP peripheral on the
 LPC1768 in SPI mode to drive the WS2812 asynchronous serial protocol.  The SPI protocol is run at 10MHz which makes each
-SPI bit **0.1us** (0.1 microseconds) in length.  The following examples shows how the SPI protocol typically sends a
+SPI bit **0.1us** (0.1 microseconds) in length.  The following example shows how the SPI protocol typically sends a
 0xA5 byte over the MOSI (Master Out Slave In) signal in 8 clock cycles.\\
 {{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160407-02.png}}\\
 
