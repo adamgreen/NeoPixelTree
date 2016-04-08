@@ -40,3 +40,39 @@ LEDs, I would use a dedicated power supply to increase the amount of available c
 mbed LPC1768 does contain a current limiting IC to make sure that we don't overburden the USB bus supply.
 
 {{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160401-01.JPG}}
+
+
+
+==WS2812 Driver
+The code for my **WS2812** driver can be found in
+[[https://github.com/adamgreen/NeoPixelTree/blob/master/firmware/NeoPixel.cpp]].  It uses the SSP peripheral on the
+LPC1768 in SPI mode to drive the WS2812 asynchronous serial protocol.  The SPI protocol is run at 10MHz which makes each
+SPI bit **0.1us** (0.1 microseconds) in length.  The following examples shows how the SPI protocol typically sends a
+0xA5 byte over the MOSI (Master Out Slave In) signal in 8 clock cycles.\\
+{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160407-02.png}}\\
+
+If we look at the [[https://cdn-shop.adafruit.com/datasheets/WS2812.pdf | WS2812 Datasheet]] we will see that the
+standard SPI protocol shown above doesn't work with the WS2812 driver in the NeoPixels.\\
+{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160407-01.png}}\\
+//The above timing diagram taken from page 4 of the
+[[https://cdn-shop.adafruit.com/datasheets/WS2812.pdf | WS2812 Datasheet]].//
+
+It is however possible to send certain bit patterns out via SPI to generate the waveforms required by the WS2812
+protocol.  Each bit sent to the NeoPixel will be composed of 12 SPI clock cycles (1.2us) which is within the
+1.25us +/- 600ns from the WS2812 data sheet.
+* A 0 bit on MOSI will be: {{{1111 0000 0000}}}\\
+{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160407-03.png}}
+** T0H is 4 cycles = 0.4us which is within the 0.35us +/- 150ns from the data sheet.
+** T0L is 8 cycles = 0.8us which exactly matches the 0.8us from the data sheet.
+* A 1 bit on MOSI will be: {{{1111 1110 0000}}}\\
+{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160407-04.png}}
+** T1H is 7 cycles = 0.7us which exactly matches the 0.7us from the data sheet.
+** T1L is 5 cycles = 0.5us which is within the 0.6us +/- 150ns from the data sheet.
+
+The following example shows how a byte with the value of 0xA5 would be sent to the WS2812 over SPI's MOSI signal using
+the above encoding:
+{{{
+   Hex:                              A                                                           5
+Binary:       1              0              1              0              0              1              0              1
+  MOSI: 1111 1110 0000 1111 0000 0000 1111 1110 0000 1111 0000 0000 1111 0000 0000 1111 1110 0000 1111 0000 0000 1111 1110 0000
+}}}
