@@ -39,11 +39,10 @@ As can be seen in the above schematic, there aren't a lot of electronics involve
 LEDs, I would use a dedicated power supply to increase the amount of available current (~60mA max per NeoPixel). The
 mbed LPC1768 does contain a current limiting IC to make sure that we don't overburden the USB bus supply.
 
-{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160401-01.JPG}}
-
 
 
 ==WS2812 Driver
+===WS2812 Protocol over SPI
 The code for my **WS2812** driver can be found in
 [[https://github.com/adamgreen/NeoPixelTree/blob/master/firmware/NeoPixel.cpp]].  It uses the SSP peripheral on the
 LPC1768 in SPI mode to drive the WS2812 asynchronous serial protocol.  The SPI protocol is run at 10MHz which makes each
@@ -76,3 +75,62 @@ the above encoding:
 Binary:       1              0              1              0              0              1              0              1
   MOSI: 1111 1110 0000 1111 0000 0000 1111 1110 0000 1111 0000 0000 1111 0000 0000 1111 1110 0000 1111 0000 0000 1111 1110 0000
 }}}
+
+===Buffers, Buffers, and more Buffers
+The pixel data makes its home in a few different locations during its lifetime. Sometimes the CPU is used to transfer
+the data from one locations to another and at other times the GPDMA engine is utilized to perform the transfer without
+CPU intervention. What follows is an overview of the 3 different buffers in which the pixel data can reside:
+# The main() code will run animations which manipulates the
+  [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/Pixel.h#L16 | 24-bit RGB data]]
+  for each pixel. It maintains this pixel data in
+  [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/main.cpp#L120 | arrays which contain one RGBData structure per NeoPixel]].
+** The CPU is used to manipulate these arrays of RGBData to create the desired lighting animations.
+# There is a
+  [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/NeoPixel.h#L62 | single back buffer]].
+** The back buffer maintains the data in the format where 12-bits of SPI data equal 1-bit of WS2812 data as described in
+   the previous section.
+** The back buffer is updated with the latest pixel data when
+   [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/NeoPixel.cpp#L169 | NeoPixel::set()]]
+   is called.
+** The CPU is used to perform this conversion, most of which takes place in
+   [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/NeoPixel.cpp#L212 | NeoPixel::emitByte() ]].
+# There are
+  [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/NeoPixel.h#L61 | two front buffers]].
+** These two front buffers are the same size and format as the back buffer.
+** These two front buffers are continuously transmitted to the WS2812 based NeoPixels via the DMA controlled SSP
+   peripheral.
+** The DMA controller automatically ping/pongs between the transmitting of each of these two front buffers with no CPU
+   intervention.
+*** This is accomplished with a circular scatter/gather list being used with the GPDMA peripheral.
+*** This circular list was setup in
+    [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/NeoPixel.cpp#L117 | NeoPixel::start()]]
+    when starting the DMA based transmission of SPI data.
+** Each time the transmission of a front buffer completes,
+   [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/NeoPixel.cpp#L271 | NeoPixel::spiTransmitInterruptHandler()]]
+   is executed.
+*** NeoPixel::spiTransmitInterruptHandler() tracks which of the two frames buffers is now starting to be sent and which
+    one just completed.
+*** If there is new content in the back buffer, NeoPixel::spiTransmitInterruptHandler() will copy it into the front
+    buffer not currently being transmitted.
+*** It uses the
+    [[https://github.com/adamgreen/NeoPixelTree/blob/39f0cb97e8f2b1c6831bfb1fb2556a8c09b8e69f/firmware/GPDMA.c#L169 | dmaMemCopy()]]
+    routine to perform this copy in the background to further reduce CPU load.
+
+===Pros
+* Highly leverages the GPDMA peripheral on the LPC1768.
+** Circular scatter/gater list for DMA based SPI transmissions.
+** DMA based memory copy.
+* CPU is just used where it really needs to be used.
+** Running animations.
+** Converting RGB data to SPI bit stream.
+* Never stops sending SPI data so that it never goes idle which would result in MOSI being tristated.
+** With the pullup resistors on the level translator this would result in MOSI being high when it should actually be
+   low.
+* Functions similar to a graphics card.
+** But graphics cards are updating displays with no memory and must maintain a set video rate.
+** NeoPixels have their own memory and don't need to be refreshed until something actually changes.
+
+===Cons
+* Is always clocking out data even when the pixel state hasn't changed.
+** Increased power usage.
+* Is a bit complicated and hard to track the movement of the data in its various forms and locations.
