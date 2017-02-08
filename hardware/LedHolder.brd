@@ -166,9 +166,6 @@
 <pad name="P$1" x="0" y="0" drill="0.5" stop="no"/>
 <circle x="0" y="0" radius="0.508" width="0" layer="29"/>
 </package>
-<package name="PAD1MMX.5MM">
-<smd name="P$1" x="0" y="0" dx="1" dy="0.5" layer="1"/>
-</package>
 </packages>
 </library>
 </libraries>
@@ -359,8 +356,8 @@ Please make sure your boards conform to these design rules.</description>
 <element name="E$1" library="adam_custom" package="LED-RGB-THRU" value="" x="4.318" y="4.318" rot="R90"/>
 <element name="3" library="adam_custom" package="TP_5MM" value="" x="6.223" y="4.318"/>
 <element name="2" library="adam_custom" package="TP_5MM" value="" x="2.413" y="4.318"/>
-<element name="E$2" library="adam_custom" package="PAD1MMX.5MM" value="" x="6.223" y="3.048" rot="MR0"/>
-<element name="E$3" library="adam_custom" package="PAD1MMX.5MM" value="" x="2.413" y="3.048" rot="MR0"/>
+<element name="E$2" library="adam_custom" package="TP_5MM" value="" x="6.223" y="3.048" rot="MR0"/>
+<element name="E$3" library="adam_custom" package="TP_5MM" value="" x="2.413" y="3.048" rot="MR0"/>
 </elements>
 <signals>
 <signal name="S$1">
