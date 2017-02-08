@@ -147,6 +147,7 @@
 <text x="6.604" y="4.826" size="1.27" layer="22" font="vector" rot="MR0">+</text>
 <text x="3.302" y="2.032" size="0.508" layer="22" font="vector" rot="MR0">Out</text>
 <text x="6.35" y="2.032" size="0.508" layer="22" font="vector" rot="MR0">In</text>
+<wire x1="3.302" y1="7.112" x2="5.334" y2="7.112" width="0.127" layer="21"/>
 </plain>
 <libraries>
 <library name="adam_custom">
@@ -161,8 +162,9 @@
 <pad name="4" x="-2.13" y="0" drill="0.7" rot="R90"/>
 </package>
 <package name="TP_5MM">
+<circle x="0" y="0" radius="0.508" width="0" layer="30"/>
 <pad name="P$1" x="0" y="0" drill="0.5" stop="no"/>
-<circle x="0" y="0" radius="0.381" width="0" layer="30"/>
+<circle x="0" y="0" radius="0.508" width="0" layer="29"/>
 </package>
 <package name="PAD1MMX.5MM">
 <smd name="P$1" x="0" y="0" dx="1" dy="0.5" layer="1"/>
