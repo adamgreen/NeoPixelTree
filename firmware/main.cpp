@@ -1,4 +1,4 @@
-/* Copyright (C) 2016  Adam Green (https://github.com/adamgreen)
+/* Copyright (C) 2018  Adam Green (https://github.com/adamgreen)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ int main()
     uint32_t lastFlipCount = 0;
     uint32_t lastSetCount = 0;
     static   DigitalOut myled(LED1);
-    static   NeoPixel   ledControl(LED_COUNT, p11);
+    static   NeoPixel   ledControl(LED_COUNT, p5);
     static   Timer      timer;
     static   Timer      ledTimer;
 
