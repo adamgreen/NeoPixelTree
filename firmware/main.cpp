@@ -14,6 +14,7 @@
 */
 #include <mbed.h>
 #include "Animation.h"
+#include "Encoders.h"
 #include "NeoPixel.h"
 
 
@@ -56,6 +57,10 @@ enum Animations
 static Animations        g_currAnimation = Solid_White;
 static IPixelUpdate*     g_pPixelUpdate;
 
+// Note: Encoders object should be constructed after any other objects using InterruptIn so that the interrupt
+//       handlers get chained together properly.
+static Encoders<p12, p11, p13, p14, p15, p16> g_encoders;
+
 
 // Function Prototypes.
 static void updateAnimation();
@@ -79,7 +84,6 @@ int main()
 
     while(1)
     {
-
         if (timer.read_ms() > SECONDS_BETWEEN_ANIMATION_SWITCH * 1000)
         {
             uint32_t currSetCount = ledControl.getSetCount();
@@ -106,6 +110,12 @@ int main()
         {
             myled = !myled;
             ledTimer.reset();
+        }
+
+        EncoderCounts encoderCounts = g_encoders.getAndClearEncoderCounts();
+        if (encoderCounts.encoder1Count != 0 || encoderCounts.encoder2Count != 0 || encoderCounts.encoder3Count != 0)
+        {
+            printf("%ld,%ld,%ld\n", encoderCounts.encoder1Count, encoderCounts.encoder2Count, encoderCounts.encoder3Count);
         }
     }
 }
