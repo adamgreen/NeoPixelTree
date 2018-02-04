@@ -20,7 +20,7 @@
 
 #define LED_COUNT                           5
 #define SECONDS_BETWEEN_ANIMATION_SWITCH    2
-#define DUMP_COUNTERS                       1
+#define DUMP_COUNTERS                       0
 
 #define ARRAY_SIZE(X) (sizeof(X)/sizeof(X[0]))
 
