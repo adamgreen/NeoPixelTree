@@ -68,3 +68,15 @@ interlockedSubtract:
     bne     interlockedSubtract
     mov     r0, r2
     bx      lr
+
+
+    .global interlockedExchange
+    .type interlockedExchange, function
+    /* int32_t  interlockedExchange(volatile int32_t* pValue, int32_t newValue); */
+interlockedExchange:
+    ldrex   r2, [r0, #0]
+    strex   r3, r1, [r0, #0]
+    cmp     r3, #0
+    bne     interlockedExchange
+    mov     r0, r2
+    bx      lr

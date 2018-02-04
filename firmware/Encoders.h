@@ -55,9 +55,9 @@ void (*EncoderBase::m_originalHandler)(void) = NULL;
 
 struct EncoderCounts
 {
-    volatile int32_t encoder1Count;
-    volatile int32_t encoder2Count;
-    volatile int32_t encoder3Count;
+    int32_t encoder1Count;
+    int32_t encoder2Count;
+    int32_t encoder3Count;
 };
 
 
@@ -147,10 +147,12 @@ public:
 
     EncoderCounts getAndClearEncoderCounts()
     {
-        EncoderCounts encoderCounts = m_encoderCounts;
-        m_encoderCounts.encoder1Count = 0;
-        m_encoderCounts.encoder2Count = 0;
-        m_encoderCounts.encoder3Count = 0;
+        EncoderCounts encoderCounts;
+
+        encoderCounts.encoder1Count = interlockedExchange(&m_encoderCounts.encoder1Count, 0);
+        encoderCounts.encoder2Count = interlockedExchange(&m_encoderCounts.encoder2Count, 0);
+        encoderCounts.encoder3Count = interlockedExchange(&m_encoderCounts.encoder3Count, 0);
+
         return encoderCounts;
     }
 
@@ -289,15 +291,15 @@ protected:
         DETECTED_CCW_TRANSITIONS = (STATE_TRANSITION_CCW_FIRST | STATE_TRANSITION_CCW_LAST | STATE_TRANSITION_MIDDLE)
     };
     
-    uint32_t      m_lastEncoder1;
-    uint32_t      m_lastEncoder2;
-    uint32_t      m_lastEncoder3;
-    uint32_t      m_stateTransitionsSeenEncoder1;
-    uint32_t      m_stateTransitionsSeenEncoder2;
-    uint32_t      m_stateTransitionsSeenEncoder3;
-    int32_t       m_transitionsToIncrementTable[32];
-    EncoderCounts m_encoderCounts;
-    Timer         m_debounceTimer;
+    uint32_t                m_lastEncoder1;
+    uint32_t                m_lastEncoder2;
+    uint32_t                m_lastEncoder3;
+    uint32_t                m_stateTransitionsSeenEncoder1;
+    uint32_t                m_stateTransitionsSeenEncoder2;
+    uint32_t                m_stateTransitionsSeenEncoder3;
+    int32_t                 m_transitionsToIncrementTable[32];
+    volatile EncoderCounts  m_encoderCounts;
+    Timer                   m_debounceTimer;
 };
 
 #endif // _ENCODERS_H_

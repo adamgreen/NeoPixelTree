@@ -25,8 +25,9 @@ extern "C"
 
 uint32_t interlockedIncrement(volatile uint32_t* pValue);
 uint32_t interlockedDecrement(volatile uint32_t* pValue);
-uint32_t interlockedAdd(volatile int32_t* pVal1, int32_t val2);
-uint32_t interlockedSubtract(volatile int32_t* pVal1, int32_t val2);
+int32_t  interlockedAdd(volatile int32_t* pVal1, int32_t val2);
+int32_t  interlockedSubtract(volatile int32_t* pVal1, int32_t val2);
+int32_t  interlockedExchange(volatile int32_t* pValue, int32_t newValue);
 
 #ifdef __cplusplus
 }
