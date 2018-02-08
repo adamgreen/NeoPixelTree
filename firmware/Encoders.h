@@ -25,6 +25,8 @@
 // Number of microseconds used for debouncing encoder signals.
 #define ENCODERS_DEBOUNCE_TIME 0UL
 
+// Number of microseconds used for debouncing knob presses.
+#define ENCODERS_KNOB_PRESS_DEBOUNCE_TIME   2000UL
 
 class EncoderBase
 {
@@ -58,25 +60,31 @@ struct EncoderCounts
     int32_t encoder1Count;
     int32_t encoder2Count;
     int32_t encoder3Count;
+    bool    knob1Pressed;
+    bool    knob2Pressed;
+    bool    knob3Pressed;
 };
 
 
-template<PinName encoder1Pin1, PinName encoder1Pin2, 
-         PinName encoder2Pin1, PinName encoder2Pin2,
-         PinName encoder3Pin1, PinName encoder3Pin2>
+template<PinName encoder1Pin1, PinName encoder1Pin2, PinName knob1Pin,
+         PinName encoder2Pin1, PinName encoder2Pin2, PinName knob2Pin,
+         PinName encoder3Pin1, PinName encoder3Pin2, PinName knob3Pin>
 class Encoders : protected EncoderBase
 {
 public:
     Encoders()
     {
-        // NOTE: Hard coded to only work with GPIO port 0 on the LPC1768.  The 2 pins for each encoder must
-        //       be contiguous as well.
+        // NOTE: Hard coded to only work with GPIO port 0 on the LPC1768.  
         assert( (encoder1Pin1 & ~0x1F) == LPC_GPIO0_BASE &&
                 (encoder1Pin2 & ~0x1F) == LPC_GPIO0_BASE &&
+                (knob1Pin & ~0x1F)     == LPC_GPIO0_BASE &&
                 (encoder2Pin1 & ~0x1F) == LPC_GPIO0_BASE &&
                 (encoder2Pin2 & ~0x1F) == LPC_GPIO0_BASE &&
+                (knob2Pin & ~0x1F)     == LPC_GPIO0_BASE &&
                 (encoder3Pin1 & ~0x1F) == LPC_GPIO0_BASE &&
-                (encoder3Pin2 & ~0x1F) == LPC_GPIO0_BASE );
+                (encoder3Pin2 & ~0x1F) == LPC_GPIO0_BASE &&
+                (knob3Pin & ~0x1F)     == LPC_GPIO0_BASE );
+        // NOTE: The 2 pins for each encoder must be contiguous as well.
         assert( (encoder1Pin1 & 0x1F) - (encoder1Pin2 & 0x1F) == -1 &&
                 (encoder2Pin1 & 0x1F) - (encoder2Pin2 & 0x1F) == -1 &&
                 (encoder3Pin1 & 0x1F) - (encoder3Pin2 & 0x1F) == -1);
@@ -84,23 +92,29 @@ public:
         // Set the pin mux to GPIO for these encoder pins.
         pin_function(encoder1Pin1, 0);
         pin_function(encoder1Pin2, 0);
+        pin_function(knob1Pin, 0);
         pin_function(encoder2Pin1, 0);
         pin_function(encoder2Pin2, 0);
+        pin_function(knob2Pin, 0);
         pin_function(encoder3Pin1, 0);
         pin_function(encoder3Pin2, 0);
+        pin_function(knob3Pin, 0);
 
         // Enable pull-ups on encoder inputs.
         pin_mode(encoder1Pin1, PullUp);
         pin_mode(encoder1Pin2, PullUp);
+        pin_mode(knob1Pin, PullUp);
         pin_mode(encoder2Pin1, PullUp);
         pin_mode(encoder2Pin2, PullUp);
+        pin_mode(knob2Pin, PullUp);
         pin_mode(encoder3Pin1, PullUp);
         pin_mode(encoder3Pin2, PullUp);
+        pin_mode(knob3Pin, PullUp);
 
         // Calculate the mask for these encoder pins on port 0.
-        uint32_t encoder1Mask = (1 << (encoder1Pin1 & 0x1F)) | (1 << (encoder1Pin2 & 0x1F));
-        uint32_t encoder2Mask = (1 << (encoder2Pin1 & 0x1F)) | (1 << (encoder2Pin2 & 0x1F));
-        uint32_t encoder3Mask = (1 << (encoder3Pin1 & 0x1F)) | (1 << (encoder3Pin2 & 0x1F));
+        uint32_t encoder1Mask = (1 << (encoder1Pin1 & 0x1F)) | (1 << (encoder1Pin2 & 0x1F)) | (1 << (knob1Pin & 0x1F));
+        uint32_t encoder2Mask = (1 << (encoder2Pin1 & 0x1F)) | (1 << (encoder2Pin2 & 0x1F)) | (1 << (knob2Pin & 0x1F));
+        uint32_t encoder3Mask = (1 << (encoder3Pin1 & 0x1F)) | (1 << (encoder3Pin2 & 0x1F)) | (1 << (knob3Pin & 0x1F));
         uint32_t encoderMask = encoder1Mask | encoder2Mask | encoder3Mask;
 
         // Configure the encoder pins as inputs.
@@ -152,6 +166,9 @@ public:
         encoderCounts.encoder1Count = interlockedExchange(&m_encoderCounts.encoder1Count, 0);
         encoderCounts.encoder2Count = interlockedExchange(&m_encoderCounts.encoder2Count, 0);
         encoderCounts.encoder3Count = interlockedExchange(&m_encoderCounts.encoder3Count, 0);
+        encoderCounts.knob1Pressed =  m_encoderCounts.knob1Pressed;
+        encoderCounts.knob2Pressed =  m_encoderCounts.knob2Pressed;
+        encoderCounts.knob3Pressed =  m_encoderCounts.knob3Pressed;
 
         return encoderCounts;
     }
@@ -186,9 +203,9 @@ protected:
         uint32_t fall0 = *pFall0;
 
         // Calculate the mask for these encoder pins on port 0.
-        static const uint32_t encoder1Mask = (1 << (encoder1Pin1 & 0x1F)) | (1 << (encoder1Pin2 & 0x1F));
-        static const uint32_t encoder2Mask = (1 << (encoder2Pin1 & 0x1F)) | (1 << (encoder2Pin2 & 0x1F));
-        static const uint32_t encoder3Mask = (1 << (encoder3Pin1 & 0x1F)) | (1 << (encoder3Pin2 & 0x1F));
+        static const uint32_t encoder1Mask = (1 << (encoder1Pin1 & 0x1F)) | (1 << (encoder1Pin2 & 0x1F)) | (1 << (knob1Pin & 0x1F));
+        static const uint32_t encoder2Mask = (1 << (encoder2Pin1 & 0x1F)) | (1 << (encoder2Pin2 & 0x1F)) | (1 << (knob2Pin & 0x1F));
+        static const uint32_t encoder3Mask = (1 << (encoder3Pin1 & 0x1F)) | (1 << (encoder3Pin2 & 0x1F)) | (1 << (knob3Pin & 0x1F));
         static const uint32_t encoderMask = encoder1Mask | encoder2Mask | encoder3Mask;
 
         // Check to see if any of the encoder signals have changed.
@@ -259,6 +276,14 @@ protected:
             m_lastEncoder1 = encoder1;
             m_lastEncoder2 = encoder2;
             m_lastEncoder3 = encoder3;
+
+            // Record the knob presses.
+            if ((uint32_t)m_debounceTimer.read_us() > ENCODERS_KNOB_PRESS_DEBOUNCE_TIME)
+            {
+                m_encoderCounts.knob1Pressed = !(port0 & (1 << (knob1Pin & 0x1F)));
+                m_encoderCounts.knob2Pressed = !(port0 & (1 << (knob2Pin & 0x1F)));
+                m_encoderCounts.knob3Pressed = !(port0 & (1 << (knob3Pin & 0x1F)));
+            }
 
             // Reset debounce timer to ignore encoder bounces for a short period of time.
             m_debounceTimer.reset();

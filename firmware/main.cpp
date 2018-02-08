@@ -59,7 +59,7 @@ static IPixelUpdate*     g_pPixelUpdate;
 
 // Note: Encoders object should be constructed after any other objects using InterruptIn so that the interrupt
 //       handlers get chained together properly.
-static Encoders<p12, p11, p13, p14, p15, p16> g_encoders;
+static Encoders<p12, p11, p17, p13, p14, p18, p15, p16, p19> g_encoders;
 
 
 // Function Prototypes.
@@ -113,9 +113,13 @@ int main()
         }
 
         EncoderCounts encoderCounts = g_encoders.getAndClearEncoderCounts();
-        if (encoderCounts.encoder1Count != 0 || encoderCounts.encoder2Count != 0 || encoderCounts.encoder3Count != 0)
+        if (encoderCounts.encoder1Count != 0 || encoderCounts.encoder2Count != 0 || encoderCounts.encoder3Count != 0 ||
+            encoderCounts.knob1Pressed || encoderCounts.knob2Pressed || encoderCounts.knob3Pressed )
         {
-            printf("%ld,%ld,%ld\n", encoderCounts.encoder1Count, encoderCounts.encoder2Count, encoderCounts.encoder3Count);
+            printf("%ld(%s) %ld(%s) %ld(%s)\n", 
+                    encoderCounts.encoder1Count, encoderCounts.knob1Pressed ? "down" : " up ",
+                    encoderCounts.encoder2Count, encoderCounts.knob2Pressed ? "down" : " up ",
+                    encoderCounts.encoder3Count, encoderCounts.knob3Pressed ? "down" : " up ");
         }
     }
 }
