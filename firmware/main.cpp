@@ -56,10 +56,9 @@ enum Animations
 
 static Animations        g_currAnimation = Solid_White;
 static IPixelUpdate*     g_pPixelUpdate;
-
-// Note: Encoders object should be constructed after any other objects using InterruptIn so that the interrupt
-//       handlers get chained together properly.
-static Encoders<p12, p11, p17, p13, p14, p18, p15, p16, p19> g_encoders;
+static Encoder           g_encoderPattern(p11, p12);
+static Encoder           g_encoderSpeed(p13, p14);
+static Encoder           g_encoderBrightness(p15, p16);
 
 
 // Function Prototypes.
@@ -112,14 +111,18 @@ int main()
             ledTimer.reset();
         }
 
-        EncoderCounts encoderCounts = g_encoders.getAndClearEncoderCounts();
-        if (encoderCounts.encoder1Count != 0 || encoderCounts.encoder2Count != 0 || encoderCounts.encoder3Count != 0 ||
-            encoderCounts.knob1Pressed || encoderCounts.knob2Pressed || encoderCounts.knob3Pressed )
+        EncoderState state;
+        if (g_encoderPattern.sample(&state))
         {
-            printf("%ld(%s) %ld(%s) %ld(%s)\n", 
-                    encoderCounts.encoder1Count, encoderCounts.knob1Pressed ? "down" : " up ",
-                    encoderCounts.encoder2Count, encoderCounts.knob2Pressed ? "down" : " up ",
-                    encoderCounts.encoder3Count, encoderCounts.knob3Pressed ? "down" : " up ");
+            printf("   Pattern:%ld\n", state.count);
+        }
+        if (g_encoderSpeed.sample(&state))
+        {
+            printf("     Speed:%ld\n", state.count);
+        }
+        if (g_encoderBrightness.sample(&state))
+        {
+            printf("Brightness:%ld\n", state.count);
         }
     }
 }

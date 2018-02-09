@@ -1,4 +1,4 @@
-# Copyright 2016 Adam Green (http://mbed.org/users/AdamGreen/)
+# Copyright 2018 Adam Green (http://mbed.org/users/AdamGreen/)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,5 +16,6 @@ DEVICES         := LPC1768
 GCC4MBED_DIR    := ../gcc4mbed
 NO_FLOAT_SCANF  := 1
 NO_FLOAT_PRINTF := 1
+MRI_UART        := MRI_UART_MBED_USB MRI_UART_BAUD=230400
 
 include $(GCC4MBED_DIR)/build/gcc4mbed.mk
