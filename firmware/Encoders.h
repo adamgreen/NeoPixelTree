@@ -29,11 +29,12 @@ struct EncoderState
 class Encoder
 {
 public:
-    Encoder(PinName pinA, PinName pinB);
+    Encoder(PinName pinA, PinName pinB, PinName pinPress);
 
     bool sample(EncoderState* pState);
 
 protected:
+    bool samplePress();
     void populateTransitionsToIncrementTable();
     
     class EncoderSignal
@@ -74,10 +75,13 @@ protected:
 
     int32_t                         m_transitionsToIncrementTable[32];
     uint32_t                        m_lastEncoderValue;
+    uint32_t                        m_pressStartTime;
     EncoderSignal::SignalStateQueue m_queueA;
     EncoderSignal::SignalStateQueue m_queueB;
     EncoderSignal                   m_signalA;
     EncoderSignal                   m_signalB;
+    bool                            m_isPressed;
+    DigitalIn                       m_pin;
 };
 
 #endif // _ENCODERS_H_

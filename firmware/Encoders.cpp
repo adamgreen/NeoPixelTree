@@ -19,6 +19,9 @@
 // The signal must be in the HIGH state for this many microseconds before it will be considered a HIGH pulse.
 #define MINIMUM_LOW_TIME 500
 
+// The time in microseconds used to debounce the press of the encoder shaft.
+#define DEBOUNCE_PRESS_TIME 1000
+
 // Encoder transitions that have been detected between detent states.
 // Have seen transition from detent state to next state for clockwise/counter clockwise rotation.
 #define STATE_TRANSITION_CW_FIRST   (1 << 0)
@@ -113,12 +116,19 @@ bool Encoder::EncoderSignal::populateStateQueue(uint32_t currTime, int currValue
     return ret;
 }
 
-Encoder::Encoder(PinName pinA, PinName pinB) : m_signalA(pinA), m_signalB(pinB)
+Encoder::Encoder(PinName pinA, PinName pinB, PinName pinPress) 
+    : m_signalA(pinA), m_signalB(pinB), m_pin(pinPress, PullUp)
 {
+    g_timer.start();
+
+    populateTransitionsToIncrementTable();
+
     m_lastEncoderValue = (m_signalB.read() << 1) | m_signalA.read();
+    m_isPressed = !m_pin.read();
+    m_pressStartTime = g_timer.read_us();
+
     memset(&m_queueA, 0, sizeof(m_queueA));
     memset(&m_queueB, 0, sizeof(m_queueB));
-    populateTransitionsToIncrementTable();
 }
 
 bool Encoder::sample(EncoderState* pState)
@@ -134,9 +144,9 @@ bool Encoder::sample(EncoderState* pState)
 
     // Assume that there is no new encoder state this time. Will change these variables later if we determine that
     // the encoder state has changed since the last call to sample().
-    bool ret = false;
     pState->count = 0;
-    pState->isPressed = false;
+    bool ret = samplePress();
+    pState->isPressed = m_isPressed;
 
     bool qUpdatedA = m_signalA.sample(&m_queueA);
     bool qUpdatedB = m_signalB.sample(&m_queueB);
@@ -212,6 +222,33 @@ bool Encoder::sample(EncoderState* pState)
     }
 
     return ret;
+}
+
+bool Encoder::samplePress()
+{
+    uint32_t currTime = g_timer.read_us();
+    if (m_isPressed)
+    {
+        uint32_t elapsedTime = currTime - m_pressStartTime;
+        if (elapsedTime < DEBOUNCE_PRESS_TIME)
+        {
+            return false;
+        }
+    }
+    
+    bool isPressed = !m_pin.read();
+    if (isPressed && !m_isPressed)
+    {
+        m_isPressed = true;
+        m_pressStartTime = currTime;
+        return true;
+    }
+    if (!isPressed && m_isPressed)
+    {
+        m_isPressed = false;
+        return true;
+    }
+    return false;
 }
 
 void Encoder::populateTransitionsToIncrementTable()

@@ -56,9 +56,9 @@ enum Animations
 
 static Animations        g_currAnimation = Solid_White;
 static IPixelUpdate*     g_pPixelUpdate;
-static Encoder           g_encoderPattern(p11, p12);
-static Encoder           g_encoderSpeed(p13, p14);
-static Encoder           g_encoderBrightness(p15, p16);
+static Encoder           g_encoderPattern(p11, p12, p17);
+static Encoder           g_encoderSpeed(p13, p14, p18);
+static Encoder           g_encoderBrightness(p15, p16, p19);
 
 
 // Function Prototypes.
@@ -114,15 +114,15 @@ int main()
         EncoderState state;
         if (g_encoderPattern.sample(&state))
         {
-            printf("   Pattern:%ld\n", state.count);
+            printf("   Pattern(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
         }
         if (g_encoderSpeed.sample(&state))
         {
-            printf("     Speed:%ld\n", state.count);
+            printf("     Speed(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
         }
         if (g_encoderBrightness.sample(&state))
         {
-            printf("Brightness:%ld\n", state.count);
+            printf("Brightness(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
         }
     }
 }
