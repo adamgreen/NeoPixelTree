@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.05" unitdist="inch" unit="mil" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -142,29 +142,53 @@
 </layers>
 <board>
 <plain>
-<circle x="4.318" y="4.318" radius="4" width="0.4064" layer="20"/>
-<text x="3.048" y="4.826" size="1.27" layer="22" font="vector" rot="MR0">-</text>
-<text x="6.604" y="4.826" size="1.27" layer="22" font="vector" rot="MR0">+</text>
-<text x="3.302" y="2.032" size="0.508" layer="22" font="vector" rot="MR0">Out</text>
-<text x="6.35" y="2.032" size="0.508" layer="22" font="vector" rot="MR0">In</text>
-<wire x1="3.302" y1="7.112" x2="5.334" y2="7.112" width="0.127" layer="21"/>
+<wire x1="0" y1="0" x2="0" y2="12.7" width="0.2032" layer="20"/>
+<wire x1="0" y1="12.7" x2="7.62" y2="12.7" width="0.2032" layer="20"/>
+<wire x1="7.62" y1="12.7" x2="7.62" y2="0" width="0.2032" layer="20"/>
+<wire x1="7.62" y1="0" x2="0" y2="0" width="0.2032" layer="20"/>
+<text x="5.588" y="0.508" size="1.016" layer="51" font="vector">In</text>
+<text x="0.508" y="0.508" size="1.016" layer="51" font="vector">Out</text>
+<text x="2.54" y="1.27" size="1.016" layer="51" font="vector">-</text>
+<text x="4.572" y="1.27" size="1.016" layer="51" font="vector">+</text>
 </plain>
 <libraries>
 <library name="adam_custom">
 <description>&lt;b&gt;Adam's Custom Parts&lt;/b&gt;</description>
 <packages>
-<package name="LED-RGB-THRU">
-<wire x1="2.5" y1="-1" x2="2.5" y2="1" width="0.127" layer="21"/>
-<wire x1="2.5" y1="-1" x2="2.5" y2="1" width="0.127" layer="21" curve="-316.397181"/>
-<pad name="2" x="0.71" y="0" drill="0.7" rot="R90"/>
-<pad name="1" x="2.13" y="0" drill="0.7" rot="R90"/>
-<pad name="3" x="-0.71" y="0" drill="0.7" rot="R90"/>
-<pad name="4" x="-2.13" y="0" drill="0.7" rot="R90"/>
+<package name="NEOPIXEL_5MM_TH">
+<pad name="GROUND" x="0.71" y="0" drill="0.7" rot="R90"/>
+<pad name="DATA_OUT" x="2.13" y="0" drill="0.7" rot="R90"/>
+<pad name="5V" x="-0.71" y="0" drill="0.7" rot="R90"/>
+<pad name="DATA_IN" x="-2.13" y="0" drill="0.7" rot="R90"/>
+<wire x1="3.175" y1="-1.27" x2="3.175" y2="1.27" width="0.127" layer="21" curve="-316.397181"/>
+<wire x1="3.175" y1="1.27" x2="3.175" y2="-1.27" width="0.127" layer="21"/>
 </package>
-<package name="TP_5MM">
-<circle x="0" y="0" radius="0.508" width="0" layer="30"/>
-<pad name="P$1" x="0" y="0" drill="0.5" stop="no"/>
-<circle x="0" y="0" radius="0.508" width="0" layer="29"/>
+<package name="NEOPIXEL_BRANCH_4WIRE">
+<pad name="P$1" x="-0.3302" y="0" drill="0.254" diameter="0.508" shape="offset" rot="R270"/>
+<pad name="P$2" x="0.3302" y="0" drill="0.254" diameter="0.508" shape="offset" rot="R270"/>
+<pad name="P$3" x="-0.9906" y="0" drill="0.254" diameter="0.508" shape="offset" rot="R270"/>
+<pad name="P$4" x="0.9906" y="0" drill="0.254" diameter="0.508" shape="offset" rot="R270"/>
+</package>
+</packages>
+</library>
+<library name="adafruit">
+<packages>
+<package name="R0805W">
+<description>&lt;b&gt;RESISTOR&lt;/b&gt;&lt;p&gt;
+chip, wave soldering</description>
+<wire x1="-0.41" y1="0.635" x2="0.41" y2="0.635" width="0.1524" layer="51"/>
+<wire x1="-0.41" y1="-0.635" x2="0.41" y2="-0.635" width="0.1524" layer="51"/>
+<wire x1="-1.973" y1="0.983" x2="1.973" y2="0.983" width="0.0508" layer="39"/>
+<wire x1="1.973" y1="0.983" x2="1.973" y2="-0.983" width="0.0508" layer="39"/>
+<wire x1="1.973" y1="-0.983" x2="-1.973" y2="-0.983" width="0.0508" layer="39"/>
+<wire x1="-1.973" y1="-0.983" x2="-1.973" y2="0.983" width="0.0508" layer="39"/>
+<smd name="1" x="-0.94" y="0" dx="1.5" dy="1" layer="1"/>
+<smd name="2" x="0.94" y="0" dx="1.5" dy="1" layer="1"/>
+<text x="-0.635" y="1.016" size="1.27" layer="25">&gt;NAME</text>
+<text x="-0.635" y="-2.159" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="0.4064" y1="-0.6985" x2="1.0564" y2="0.7015" layer="51"/>
+<rectangle x1="-1.0668" y1="-0.6985" x2="-0.4168" y2="0.7015" layer="51"/>
+<rectangle x1="-0.1999" y1="-0.5001" x2="0.1999" y2="0.5001" layer="35"/>
 </package>
 </packages>
 </library>
@@ -177,20 +201,18 @@
 <class number="0" name="default" width="0" drill="0">
 </class>
 </classes>
-<designrules name="LaenPCBOrder">
-<description language="de">&lt;b&gt;EAGLE Design Rules&lt;/b&gt;
+<designrules name="oshpark-2layer">
+<description language="en">&lt;b&gt;OSH Park Design Rules&lt;/b&gt;
 &lt;p&gt;
-Die Standard-Design-Rules sind so gewählt, dass sie für 
-die meisten Anwendungen passen. Sollte ihre Platine 
-besondere Anforderungen haben, treffen Sie die erforderlichen
-Einstellungen hier und speichern die Design Rules unter 
-einem neuen Namen ab.</description>
-<description language="en">&lt;b&gt;Laen's PCB Order Design Rules&lt;/b&gt;
+Please make sure your boards conform to these design rules.
+&lt;/p&gt;
 &lt;p&gt;
-Please make sure your boards conform to these design rules.</description>
+Note, that not all DRC settings must be set by the manufacturer. Several can be adjusted for the design, including those listed on our docs page here. 
+&lt;a href=&quot;http://docs.oshpark.com/design-tools/eagle/design-rules-files/&quot;&gt;Adjustable Settings&lt;/a&gt;
+&lt;/p&gt;</description>
 <param name="layerSetup" value="(1*16)"/>
-<param name="mtCopper" value="0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm"/>
-<param name="mtIsolate" value="1.5011mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm"/>
+<param name="mtCopper" value="0.035559375mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.035559375mm"/>
+<param name="mtIsolate" value="1.6mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm"/>
 <param name="mdWireWire" value="6mil"/>
 <param name="mdWirePad" value="6mil"/>
 <param name="mdWireVia" value="6mil"/>
@@ -206,8 +228,8 @@ Please make sure your boards conform to these design rules.</description>
 <param name="mdDrill" value="6mil"/>
 <param name="mdSmdStop" value="0mil"/>
 <param name="msWidth" value="6mil"/>
-<param name="msDrill" value="13mil"/>
-<param name="msMicroVia" value="13mil"/>
+<param name="msDrill" value="10mil"/>
+<param name="msMicroVia" value="10mil"/>
 <param name="msBlindViaRatio" value="0.5"/>
 <param name="rvPadTop" value="0.25"/>
 <param name="rvPadInner" value="0.25"/>
@@ -216,19 +238,19 @@ Please make sure your boards conform to these design rules.</description>
 <param name="rvViaInner" value="0.25"/>
 <param name="rvMicroViaOuter" value="0.25"/>
 <param name="rvMicroViaInner" value="0.25"/>
-<param name="rlMinPadTop" value="7mil"/>
+<param name="rlMinPadTop" value="5mil"/>
 <param name="rlMaxPadTop" value="20mil"/>
-<param name="rlMinPadInner" value="7mil"/>
+<param name="rlMinPadInner" value="5mil"/>
 <param name="rlMaxPadInner" value="20mil"/>
-<param name="rlMinPadBottom" value="7mil"/>
+<param name="rlMinPadBottom" value="5mil"/>
 <param name="rlMaxPadBottom" value="20mil"/>
-<param name="rlMinViaOuter" value="7mil"/>
+<param name="rlMinViaOuter" value="5mil"/>
 <param name="rlMaxViaOuter" value="20mil"/>
-<param name="rlMinViaInner" value="7mil"/>
+<param name="rlMinViaInner" value="5mil"/>
 <param name="rlMaxViaInner" value="20mil"/>
-<param name="rlMinMicroViaOuter" value="4mil"/>
+<param name="rlMinMicroViaOuter" value="5mil"/>
 <param name="rlMaxMicroViaOuter" value="20mil"/>
-<param name="rlMinMicroViaInner" value="4mil"/>
+<param name="rlMinMicroViaInner" value="5mil"/>
 <param name="rlMaxMicroViaInner" value="20mil"/>
 <param name="psTop" value="-1"/>
 <param name="psBottom" value="-1"/>
@@ -237,8 +259,8 @@ Please make sure your boards conform to these design rules.</description>
 <param name="psElongationOffset" value="100"/>
 <param name="mvStopFrame" value="1"/>
 <param name="mvCreamFrame" value="0"/>
-<param name="mlMinStopFrame" value="3mil"/>
-<param name="mlMaxStopFrame" value="3mil"/>
+<param name="mlMinStopFrame" value="2.5mil"/>
+<param name="mlMaxStopFrame" value="2.5mil"/>
 <param name="mlMinCreamFrame" value="0mil"/>
 <param name="mlMaxCreamFrame" value="0mil"/>
 <param name="mlViaStopLimit" value="0mil"/>
@@ -353,36 +375,36 @@ Please make sure your boards conform to these design rules.</description>
 </pass>
 </autorouter>
 <elements>
-<element name="E$1" library="adam_custom" package="LED-RGB-THRU" value="" x="4.318" y="4.318" rot="R90"/>
-<element name="3" library="adam_custom" package="TP_5MM" value="" x="6.223" y="4.318"/>
-<element name="2" library="adam_custom" package="TP_5MM" value="" x="2.413" y="4.318"/>
-<element name="E$2" library="adam_custom" package="TP_5MM" value="" x="6.223" y="3.048" rot="MR0"/>
-<element name="E$3" library="adam_custom" package="TP_5MM" value="" x="2.413" y="3.048" rot="MR0"/>
+<element name="E$1" library="adam_custom" package="NEOPIXEL_5MM_TH" value="" x="3.81" y="8.382" rot="R180"/>
+<element name="E$2" library="adam_custom" package="NEOPIXEL_BRANCH_4WIRE" value="" x="3.81" y="3.302"/>
+<element name="E$3" library="adafruit" package="R0805W" value="0.1uF" x="3.81" y="5.842" smashed="yes">
+<attribute name="VALUE" x="2.413" y="3.937" size="0.8128" layer="27" font="vector"/>
+</element>
 </elements>
 <signals>
 <signal name="S$1">
-<contactref element="E$1" pad="2"/>
-<contactref element="2" pad="P$1"/>
-<wire x1="4.318" y1="5.028" x2="2.413" y2="4.318" width="0.508" layer="16"/>
+<contactref element="E$3" pad="1"/>
+<contactref element="E$1" pad="GROUND"/>
+<wire x1="3.1" y1="8.382" x2="2.87" y2="5.842" width="0" layer="19" extent="1-16"/>
+<contactref element="E$2" pad="P$1"/>
+<wire x1="2.87" y1="5.842" x2="3.4798" y2="3.302" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="S$2">
-<contactref element="E$1" pad="3"/>
-<contactref element="3" pad="P$1"/>
-<wire x1="6.223" y1="4.318" x2="4.318" y2="3.608" width="0.508" layer="16"/>
+<contactref element="E$3" pad="2"/>
+<contactref element="E$1" pad="5V"/>
+<wire x1="4.52" y1="8.382" x2="4.75" y2="5.842" width="0" layer="19" extent="1-16"/>
+<contactref element="E$2" pad="P$2"/>
+<wire x1="4.75" y1="5.842" x2="4.1402" y2="3.302" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="S$3">
-<contactref element="E$1" pad="1"/>
-<contactref element="E$3" pad="P$1"/>
-<wire x1="2.413" y1="3.048" x2="1.524" y2="3.048" width="0.254" layer="16"/>
-<wire x1="1.524" y1="3.048" x2="1.524" y2="5.334" width="0.254" layer="16"/>
-<wire x1="1.524" y1="5.334" x2="2.638" y2="6.448" width="0.254" layer="16"/>
-<wire x1="2.638" y1="6.448" x2="4.318" y2="6.448" width="0.254" layer="16"/>
+<contactref element="E$2" pad="P$3"/>
+<contactref element="E$1" pad="DATA_OUT"/>
+<wire x1="1.68" y1="8.382" x2="2.8194" y2="3.302" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="S$4">
-<contactref element="E$1" pad="4"/>
-<contactref element="E$2" pad="P$1"/>
-<wire x1="6.223" y1="3.048" x2="6.223" y2="2.188" width="0.254" layer="16"/>
-<wire x1="6.223" y1="2.188" x2="4.318" y2="2.188" width="0.254" layer="16"/>
+<contactref element="E$2" pad="P$4"/>
+<contactref element="E$1" pad="DATA_IN"/>
+<wire x1="5.94" y1="8.382" x2="4.8006" y2="3.302" width="0" layer="19" extent="1-16"/>
 </signal>
 </signals>
 </board>
