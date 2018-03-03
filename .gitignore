@@ -17,3 +17,6 @@ gdb.log
 
 # Personal deploy scripts
 deploy
+
+*.b#*
+*.s#*
