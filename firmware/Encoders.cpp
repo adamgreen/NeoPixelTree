@@ -17,7 +17,7 @@
 
 
 // The signal must be in the HIGH state for this many microseconds before it will be considered a HIGH pulse.
-#define MINIMUM_LOW_TIME 500
+#define MINIMUM_HIGH_TIME 500
 
 // The time in microseconds used to debounce the press of the encoder shaft.
 #define DEBOUNCE_PRESS_TIME 1000
@@ -26,7 +26,7 @@
 // Have seen transition from detent state to next state for clockwise/counter clockwise rotation.
 #define STATE_TRANSITION_CW_FIRST   (1 << 0)
 #define STATE_TRANSITION_CCW_FIRST  (1 << 1)
-// Have seen transition back to detent state for clockwise/counter clockwise rotation.
+// Have seen transition back to state just before final transition to detent for clockwise/counter clockwise rotation.
 #define STATE_TRANSITION_CW_LAST    (1 << 2)
 #define STATE_TRANSITION_CCW_LAST   (1 << 3)
 // Have seen encoder state from middle of clockwise or counter clockwise rotation (both inputs LO).
@@ -46,7 +46,7 @@ Encoder::EncoderSignal::EncoderSignal(PinName pin) : m_pin(pin, PullUp)
 {
     g_timer.start();
     uint32_t currTime = g_timer.read_us();
-    
+
     m_lastHighPulse.startTime = currTime;
     m_lastHighPulse.endTime = currTime;
     m_lastHighPulse.value = 1;
@@ -57,7 +57,7 @@ Encoder::EncoderSignal::EncoderSignal(PinName pin) : m_pin(pin, PullUp)
     m_currPulse.value = m_pin.read();
     m_currPulse.needsProcessing = true;
 }
-    
+
 bool Encoder::EncoderSignal::sample(SignalStateQueue* pStateQueue)
 {
     int      currValue = m_pin.read();
@@ -67,7 +67,7 @@ bool Encoder::EncoderSignal::sample(SignalStateQueue* pStateQueue)
     // Populate the state queue when we have detected the end of a clean HIGH pulse.
     // This will happen when we see the next trailing edge or the signal has been HIGH for a long time (as would
     // happen when just sitting at a detent during 0 rotation).
-    if (m_currPulse.value && elapsedTime > MINIMUM_LOW_TIME)
+    if (m_currPulse.value && elapsedTime > MINIMUM_HIGH_TIME)
     {
         return populateStateQueue(currTime, currValue, pStateQueue);
     }
@@ -83,7 +83,7 @@ bool Encoder::EncoderSignal::sample(SignalStateQueue* pStateQueue)
     // No new high pulse has been detected.
     return false;
 }
-    
+
 bool Encoder::EncoderSignal::populateStateQueue(uint32_t currTime, int currValue, SignalStateQueue* pStateQueue)
 {
     bool ret = false;
@@ -116,7 +116,7 @@ bool Encoder::EncoderSignal::populateStateQueue(uint32_t currTime, int currValue
     return ret;
 }
 
-Encoder::Encoder(PinName pinA, PinName pinB, PinName pinPress) 
+Encoder::Encoder(PinName pinA, PinName pinB, PinName pinPress)
     : m_signalA(pinA), m_signalB(pinB), m_pin(pinPress, PullUp)
 {
     g_timer.start();
@@ -134,12 +134,12 @@ Encoder::Encoder(PinName pinA, PinName pinB, PinName pinPress)
 bool Encoder::sample(EncoderState* pState)
 {
     // Table used to look up clockwise/counter-clockwise state transition based on current and last state.
-    static const uint32_t stateTable[4][4] = 
+    static const uint32_t stateTable[4][4] =
     {
         {0,                       STATE_TRANSITION_CW_LAST,   STATE_TRANSITION_CCW_LAST, STATE_TRANSITION_DETENT},
         {STATE_TRANSITION_MIDDLE, 0,                          0,                         STATE_TRANSITION_DETENT},
         {STATE_TRANSITION_MIDDLE, 0,                          0,                         STATE_TRANSITION_DETENT},
-        {0,                       STATE_TRANSITION_CCW_FIRST, STATE_TRANSITION_CW_FIRST, STATE_TRANSITION_DETENT} 
+        {0,                       STATE_TRANSITION_CCW_FIRST, STATE_TRANSITION_CW_FIRST, STATE_TRANSITION_DETENT}
     };
 
     // Assume that there is no new encoder state this time. Will change these variables later if we determine that
@@ -190,7 +190,7 @@ bool Encoder::sample(EncoderState* pState)
                 }
                 m_lastEncoderValue = currEncoderValue;
             }
-            
+
             // Only need to process this pulse if we haven't already processed it on an earlier call to sample().
             if (!reprocessing || pCurrState->needsProcessing)
             {
@@ -235,7 +235,7 @@ bool Encoder::samplePress()
             return false;
         }
     }
-    
+
     bool isPressed = !m_pin.read();
     if (isPressed && !m_isPressed)
     {
