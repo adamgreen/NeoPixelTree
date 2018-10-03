@@ -54,7 +54,15 @@ enum Animations
     Max_Animation
 };
 
+// Should we advance to next or previous animation.
+enum AdvanceMode
+{
+    Advance_Next,
+    Advance_Prev
+};
+
 static Animations        g_currAnimation = Solid_White;
+static bool              g_demoMode = true;
 static IPixelUpdate*     g_pPixelUpdate;
 static Encoder           g_encoderPattern(p11, p12, p17);
 static Encoder           g_encoderSpeed(p13, p14, p18);
@@ -63,7 +71,7 @@ static Encoder           g_encoderBrightness(p15, p16, p19);
 
 // Function Prototypes.
 static void updateAnimation();
-static void advanceToNextAnimation();
+static void advanceToNextAnimation(AdvanceMode advance);
 
 
 int main()
@@ -98,10 +106,14 @@ int main()
             }
 
             timer.reset();
-            advanceToNextAnimation();
-
             lastSetCount = currSetCount;
             lastFlipCount = currFlipCount;
+
+            // Only advance to next animation if in demo mode.
+            if (g_demoMode)
+            {
+                advanceToNextAnimation(Advance_Next);
+            }
         }
         g_pPixelUpdate->updatePixels(ledControl);
 
@@ -115,7 +127,22 @@ int main()
         if (g_encoderPattern.sample(&state))
         {
             printf("   Pattern(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
+            if (state.count > 0)
+            {
+                g_demoMode = false;
+                advanceToNextAnimation(Advance_Next);
+            }
+            else if (state.count < 0)
+            {
+                g_demoMode = false;
+                advanceToNextAnimation(Advance_Prev);
+            }
+            if (state.isPressed)
+            {
+                g_demoMode = true;
+            }
         }
+
         if (g_encoderSpeed.sample(&state))
         {
             printf("     Speed(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
@@ -458,12 +485,23 @@ static void updateAnimation()
     }
 }
 
-static void advanceToNextAnimation()
+static void advanceToNextAnimation(AdvanceMode advance)
 {
-    g_currAnimation = (Animations)(g_currAnimation + 1);
-    if (g_currAnimation >= Max_Animation)
+    if (advance == Advance_Next)
     {
-        g_currAnimation = Solid_White;
+        g_currAnimation = (Animations)(g_currAnimation + 1);
+        if (g_currAnimation >= Max_Animation)
+        {
+            g_currAnimation = Solid_White;
+        }
+    }
+    else
+    {
+        if (g_currAnimation == Solid_White)
+        {
+            g_currAnimation = Max_Animation;
+        }
+        g_currAnimation = (Animations)(g_currAnimation - 1);
     }
     updateAnimation();
 }
