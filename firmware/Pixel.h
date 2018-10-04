@@ -1,5 +1,5 @@
 /* Copyright (C) 2014 Leszek S   (http://stackoverflow.com/users/2102779/leszek-s)
-   Copyright (C) 2016 Adam Green (https://github.com/adamgreen)
+   Copyright (C) 2018 Adam Green (https://github.com/adamgreen)
 
    Released under the Creative Commons Attribution Share-Alike 4.0 License
         https://creativecommons.org/licenses/by-sa/4.0/
@@ -117,12 +117,14 @@ static inline void rgbToHsv(HSVData* pHSV, const RGBData* pRGB)
     {
         pHSV->hue = 0;
         pHSV->saturation = 0;
+        return;
     }
 
     pHSV->saturation = 255 * (rgbMax - rgbMin) / pHSV->value;
     if (pHSV->saturation == 0)
     {
         pHSV->hue = 0;
+        return;
     }
 
     if (rgbMax == red)
