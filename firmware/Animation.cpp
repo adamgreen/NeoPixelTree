@@ -1,4 +1,4 @@
-/* Copyright (C) 2016  Adam Green (https://github.com/adamgreen)
+/* Copyright (C) 2018  Adam Green (https://github.com/adamgreen)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 
 // powf(255.0f, (float)x / 255.0);
-uint8_t AnimationBase::s_powerTable[256] =
+static uint8_t g_powerTable[256] =
 {
       1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
       1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
@@ -39,7 +39,7 @@ uint8_t AnimationBase::s_powerTable[256] =
 };
 
 // log2f((float)x)/log2f(255.0f)*255.0f
-uint8_t AnimationBase::s_logTable[256] =
+static uint8_t g_logTable[256] =
 {
       0,   0,  31,  50,  63,  74,  82,  89,  95, 101, 105, 110, 114, 118, 121, 124,
     127, 130, 133, 135, 137, 140, 142, 144, 146, 148, 149, 151, 153, 154, 156, 158,
@@ -164,7 +164,7 @@ void AnimationBase::rgbToInterpolatableHsv(HSVData* pHsvDest, const RGBData* pRg
 
     // An exponential curve is used during interpolation for brightness. This inverses that so that the beginning
     // and end of the interpolation will result in the same RGB values as in the keyframe.
-    pHsvDest->value = s_logTable[pHsvDest->value];
+    pHsvDest->value = g_logTable[pHsvDest->value];
 }
 
 void AnimationBase::interpolateBetweenKeyFrames(int32_t currTime, int32_t totalTime)
@@ -196,7 +196,7 @@ void AnimationBase::interpolateHsvToRgb(RGBData* pRgbDest, const HSVData* pHsvSt
     int32_t valuePrev = pHsvStart->value;
     int32_t valueNext = pHsvStop->value;
     int32_t newValue = (valuePrev + ((valueNext - valuePrev) * curr) / total);
-    interpolated.value = s_powerTable[newValue];
+    interpolated.value = g_powerTable[newValue];
 
     hsvToRgb(pRgbDest, &interpolated);
 }
@@ -429,4 +429,23 @@ void FlickerAnimationBase::updatePixel(RGBData* pRgbDest,
 
         return;
     }
+}
+
+void changeBrightness(RGBData* pPattern, size_t srcPixelCount, uint8_t brightnessFactor)
+{
+    while (srcPixelCount--)
+    {
+        HSVData hsv;
+
+        rgbToHsv(&hsv, pPattern);
+        hsv.value = ((uint16_t)hsv.value * brightnessFactor) / 255;
+        hsvToRgb(pPattern, &hsv);
+
+        pPattern++;
+    }
+}
+
+uint8_t logOfBrightness(uint8_t brightness)
+{
+    return g_logTable[brightness];
 }

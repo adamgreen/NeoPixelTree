@@ -1,4 +1,4 @@
-/* Copyright (C) 2016  Adam Green (https://github.com/adamgreen)
+/* Copyright (C) 2018  Adam Green (https://github.com/adamgreen)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -54,8 +54,6 @@ protected:
     void convertRgbPixelsToHsv(HSVData* pHsvDest, const RGBData* pRgbSrc, size_t pixelCount);
     void interpolateBetweenKeyFrames(int32_t currTime, int32_t totalTime);
 
-    static uint8_t           s_powerTable[256];
-    static uint8_t           s_logTable[256];
     const AnimationKeyFrame* m_pStart;
     const AnimationKeyFrame* m_pEnd;
     const AnimationKeyFrame* m_pCurr;
@@ -249,5 +247,8 @@ static inline void createInterpolatedPixelPattern(RGBData* pDest, size_t destPix
         AnimationBase::interpolateHsvToRgb(pDest++, &hsvStart, &hsvStop, i, totalPixels);
     }
 }
+
+void changeBrightness(RGBData* pPattern, size_t srcPixelCount, uint8_t brightnessFactor);
+uint8_t logOfBrightness(uint8_t brightness);
 
 #endif // ANIMATION_H_

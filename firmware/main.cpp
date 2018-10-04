@@ -19,8 +19,13 @@
 
 
 #define LED_COUNT                           50
-#define SECONDS_BETWEEN_ANIMATION_SWITCH    2
+#define SECONDS_BETWEEN_ANIMATION_SWITCH    30
 #define DUMP_COUNTERS                       0
+
+#define BRIGHTNESS_MIN                      1
+#define BRIGHTNESS_MAX                      255
+#define BRIGHTNESS_DEFAULT                  128
+#define BRIGHTNESS_DELTA                    1
 
 #define ARRAY_SIZE(X) (sizeof(X)/sizeof(X[0]))
 
@@ -64,6 +69,7 @@ enum AdvanceMode
 static Animations        g_currAnimation = Solid_White;
 static bool              g_demoMode = true;
 static IPixelUpdate*     g_pPixelUpdate;
+static int16_t           g_brightness = BRIGHTNESS_DEFAULT;
 static Encoder           g_encoderPattern(p11, p12, p17);
 static Encoder           g_encoderSpeed(p13, p14, p18);
 static Encoder           g_encoderBrightness(p15, p16, p19);
@@ -126,7 +132,6 @@ int main()
         EncoderState state;
         if (g_encoderPattern.sample(&state))
         {
-            printf("   Pattern(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
             if (state.count > 0)
             {
                 g_demoMode = false;
@@ -147,9 +152,31 @@ int main()
         {
             printf("     Speed(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
         }
+
         if (g_encoderBrightness.sample(&state))
         {
-            printf("Brightness(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
+            if (state.count > 0)
+            {
+                g_brightness += BRIGHTNESS_DELTA * state.count;
+                if (g_brightness > BRIGHTNESS_MAX)
+                {
+                    g_brightness = BRIGHTNESS_MAX;
+                }
+            }
+            else if (state.count < 0)
+            {
+                g_brightness += BRIGHTNESS_DELTA * state.count;
+                if (g_brightness < BRIGHTNESS_MIN)
+                {
+                    g_brightness = BRIGHTNESS_MIN;
+                }
+            }
+            if (state.isPressed)
+            {
+                g_brightness = BRIGHTNESS_DEFAULT;
+            }
+
+            updateAnimation();
         }
     }
 }
@@ -168,11 +195,15 @@ static void updateAnimation()
     static RGBData                     pixels5[LED_COUNT];
     static AnimationKeyFrame           keyFrames[5];
 
+    // Use the natural logarithm of brightness setting to create a smoother gradient.
+    uint8_t brightness = logOfBrightness(g_brightness);
+
     switch (g_currAnimation)
     {
     case Solid_White:
         {
             RGBData pattern[] = { WHITE };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -182,6 +213,7 @@ static void updateAnimation()
     case Solid_Red:
         {
             RGBData pattern[] = { RED };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -191,6 +223,7 @@ static void updateAnimation()
     case Solid_Green:
         {
             RGBData pattern[] = { GREEN };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -200,6 +233,7 @@ static void updateAnimation()
     case Solid_Blue_White:
         {
             RGBData pattern[] = { BLUE, WHITE };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -209,6 +243,7 @@ static void updateAnimation()
     case Solid_Red_Green:
         {
             RGBData pattern[] = { RED, GREEN };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -218,6 +253,7 @@ static void updateAnimation()
     case Solid_Red_Green_White:
         {
             RGBData pattern[] = { RED, GREEN, WHITE };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -227,6 +263,7 @@ static void updateAnimation()
     case Solid_Red_Orange_Yellow_Green_Blue:
         {
             RGBData pattern[] = { RED, DARK_ORANGE, YELLOW, GREEN, BLUE };
+            changeBrightness(pattern, ARRAY_SIZE(pattern), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern, ARRAY_SIZE(pattern));
             keyFrames[0] = {pixels1, 0x7FFFFFFF, false};
             animation.setKeyFrames(keyFrames, 1);
@@ -237,6 +274,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { BLUE, WHITE };
             RGBData pattern2[] = { WHITE, BLUE };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 250, false};
@@ -249,6 +288,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { RED, GREEN };
             RGBData pattern2[] = { GREEN, RED };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 250, false};
@@ -262,6 +303,9 @@ static void updateAnimation()
             RGBData pattern1[] = { RED, GREEN, WHITE };
             RGBData pattern2[] = { WHITE, RED, GREEN };
             RGBData pattern3[] = { GREEN, WHITE, RED };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
+            changeBrightness(pattern3, ARRAY_SIZE(pattern3), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
@@ -279,6 +323,11 @@ static void updateAnimation()
             RGBData pattern3[] = { GREEN, BLUE, RED, DARK_ORANGE, YELLOW };
             RGBData pattern4[] = { YELLOW, GREEN, BLUE, RED, DARK_ORANGE };
             RGBData pattern5[] = { DARK_ORANGE, YELLOW, GREEN, BLUE, RED };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
+            changeBrightness(pattern3, ARRAY_SIZE(pattern3), brightness);
+            changeBrightness(pattern4, ARRAY_SIZE(pattern4), brightness);
+            changeBrightness(pattern5, ARRAY_SIZE(pattern5), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
@@ -297,6 +346,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { RGBData(8, 0, 0) };
             RGBData pattern2[] = { RGBData(255, 0, 0) };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
@@ -309,6 +360,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { RGBData(0, 8, 0) };
             RGBData pattern2[] = { RGBData(0, 255, 0) };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
@@ -321,6 +374,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { RGBData(8, 8, 8) };
             RGBData pattern2[] = { RGBData(255, 255, 255) };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 1000, true};
@@ -333,6 +388,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { BLUE, WHITE };
             RGBData pattern2[] = { WHITE, BLUE };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 250, true};
@@ -345,6 +402,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { RED, GREEN };
             RGBData pattern2[] = { GREEN, RED };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             keyFrames[0] = {pixels1, 250, true};
@@ -358,6 +417,9 @@ static void updateAnimation()
             RGBData pattern1[] = { RED, GREEN, WHITE };
             RGBData pattern2[] = { WHITE, RED, GREEN };
             RGBData pattern3[] = { GREEN, WHITE, RED };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
+            changeBrightness(pattern3, ARRAY_SIZE(pattern3), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
@@ -375,6 +437,11 @@ static void updateAnimation()
             RGBData pattern3[] = { GREEN, BLUE, RED, DARK_ORANGE, YELLOW };
             RGBData pattern4[] = { YELLOW, GREEN, BLUE, RED, DARK_ORANGE };
             RGBData pattern5[] = { DARK_ORANGE, YELLOW, GREEN, BLUE, RED };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
+            changeBrightness(pattern3, ARRAY_SIZE(pattern3), brightness);
+            changeBrightness(pattern4, ARRAY_SIZE(pattern4), brightness);
+            changeBrightness(pattern5, ARRAY_SIZE(pattern5), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
@@ -393,6 +460,8 @@ static void updateAnimation()
         {
             RGBData pattern1[] = { RED };
             RGBData pattern2[] = { VIOLET };
+            changeBrightness(pattern1, ARRAY_SIZE(pattern1), brightness);
+            changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createInterpolatedPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, pattern2);
             createInterpolatedPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, pattern1);
             keyFrames[0] = {pixels1, 1000, true};
@@ -410,8 +479,8 @@ static void updateAnimation()
             twinkleProperties.hueMax = 0;
             twinkleProperties.saturationMin = 0;
             twinkleProperties.saturationMax = 0;
-            twinkleProperties.valueMin = 128;
-            twinkleProperties.valueMax = 255;
+            twinkleProperties.valueMin = brightness / 2;
+            twinkleProperties.valueMax = brightness;
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -425,8 +494,8 @@ static void updateAnimation()
             twinkleProperties.hueMax = 0;
             twinkleProperties.saturationMin = 255;
             twinkleProperties.saturationMax = 255;
-            twinkleProperties.valueMin = 128;
-            twinkleProperties.valueMax = 255;
+            twinkleProperties.valueMin = brightness / 2;
+            twinkleProperties.valueMax = brightness;
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -440,8 +509,8 @@ static void updateAnimation()
             twinkleProperties.hueMax = 84;
             twinkleProperties.saturationMin = 255;
             twinkleProperties.saturationMax = 255;
-            twinkleProperties.valueMin = 128;
-            twinkleProperties.valueMax = 255;
+            twinkleProperties.valueMin = brightness / 2;
+            twinkleProperties.valueMax = brightness;
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -455,8 +524,8 @@ static void updateAnimation()
             twinkleProperties.hueMax = 255;
             twinkleProperties.saturationMin = 0;
             twinkleProperties.saturationMax = 255;
-            twinkleProperties.valueMin = 128;
-            twinkleProperties.valueMax = 255;
+            twinkleProperties.valueMin = brightness / 2;
+            twinkleProperties.valueMax = brightness;
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -466,8 +535,8 @@ static void updateAnimation()
             flickerProperties.timeMin = 2;
             flickerProperties.timeMax = 3;
             flickerProperties.stayBrightFactor = 2;
-            flickerProperties.brightnessMin = 128;
-            flickerProperties.brightnessMax = 255;
+            flickerProperties.brightnessMin = brightness / 2;
+            flickerProperties.brightnessMax = brightness;
             flickerProperties.baseRGBColour = DARK_ORANGE;
             flicker.setProperties(&flickerProperties);
             g_pPixelUpdate = &flicker;
