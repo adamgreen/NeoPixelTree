@@ -27,6 +27,11 @@
 #define BRIGHTNESS_DEFAULT                  128
 #define BRIGHTNESS_DELTA                    1
 
+#define DELAY_MIN                           125
+#define DELAY_MAX                           1000
+#define DELAY_DEFAULT                       250
+#define DELAY_DELTA                         5
+
 #define ARRAY_SIZE(X) (sizeof(X)/sizeof(X[0]))
 
 // The animations that I currently have defined for this sample.
@@ -70,6 +75,7 @@ static Animations        g_currAnimation = Solid_White;
 static bool              g_demoMode = true;
 static IPixelUpdate*     g_pPixelUpdate;
 static int16_t           g_brightness = BRIGHTNESS_DEFAULT;
+static int32_t           g_delay = DELAY_DEFAULT;
 static Encoder           g_encoderPattern(p11, p12, p17);
 static Encoder           g_encoderSpeed(p13, p14, p18);
 static Encoder           g_encoderBrightness(p15, p16, p19);
@@ -150,7 +156,30 @@ int main()
 
         if (g_encoderSpeed.sample(&state))
         {
-            printf("     Speed(%s):%ld\n", state.isPressed ? "_" : "-", state.count);
+            // Increasing count on speed encoder will cause a decrease in delay so the logic is inverted from the
+            // other encoders.
+            if (state.count < 0)
+            {
+                g_delay -= DELAY_DELTA * state.count;
+                if (g_delay > DELAY_MAX)
+                {
+                    g_delay = DELAY_MAX;
+                }
+            }
+            else if (state.count > 0)
+            {
+                g_delay -= DELAY_DELTA * state.count;
+                if (g_delay < DELAY_MIN)
+                {
+                    g_delay = DELAY_MIN;
+                }
+            }
+            if (state.isPressed)
+            {
+                g_delay = DELAY_DEFAULT;
+            }
+
+            updateAnimation();
         }
 
         if (g_encoderBrightness.sample(&state))
@@ -278,8 +307,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 250, false};
-            keyFrames[1] = {pixels2, 250, false};
+            keyFrames[0] = {pixels1, g_delay, false};
+            keyFrames[1] = {pixels2, g_delay, false};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -292,8 +321,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 250, false};
-            keyFrames[1] = {pixels2, 250, false};
+            keyFrames[0] = {pixels1, g_delay, false};
+            keyFrames[1] = {pixels2, g_delay, false};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -309,9 +338,9 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
-            keyFrames[0] = {pixels1, 250, false};
-            keyFrames[1] = {pixels2, 250, false};
-            keyFrames[2] = {pixels3, 250, false};
+            keyFrames[0] = {pixels1, g_delay, false};
+            keyFrames[1] = {pixels2, g_delay, false};
+            keyFrames[2] = {pixels3, g_delay, false};
             animation.setKeyFrames(keyFrames, 3);
             g_pPixelUpdate = &animation;
             break;
@@ -333,11 +362,11 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
             createRepeatingPixelPattern(pixels4, ARRAY_SIZE(pixels4), pattern4, ARRAY_SIZE(pattern4));
             createRepeatingPixelPattern(pixels5, ARRAY_SIZE(pixels5), pattern5, ARRAY_SIZE(pattern5));
-            keyFrames[0] = {pixels1, 250, false};
-            keyFrames[1] = {pixels2, 250, false};
-            keyFrames[2] = {pixels3, 250, false};
-            keyFrames[3] = {pixels4, 250, false};
-            keyFrames[4] = {pixels5, 250, false};
+            keyFrames[0] = {pixels1, g_delay, false};
+            keyFrames[1] = {pixels2, g_delay, false};
+            keyFrames[2] = {pixels3, g_delay, false};
+            keyFrames[3] = {pixels4, g_delay, false};
+            keyFrames[4] = {pixels5, g_delay, false};
             animation.setKeyFrames(keyFrames, 5);
             g_pPixelUpdate = &animation;
             break;
@@ -350,8 +379,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 1000, true};
-            keyFrames[1] = {pixels2, 1000, true};
+            keyFrames[0] = {pixels1, g_delay * 4, true};
+            keyFrames[1] = {pixels2, g_delay * 4, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -364,8 +393,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 1000, true};
-            keyFrames[1] = {pixels2, 1000, true};
+            keyFrames[0] = {pixels1, g_delay * 4, true};
+            keyFrames[1] = {pixels2, g_delay * 4, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -378,8 +407,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 1000, true};
-            keyFrames[1] = {pixels2, 1000, true};
+            keyFrames[0] = {pixels1, g_delay * 4, true};
+            keyFrames[1] = {pixels2, g_delay * 4, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -392,8 +421,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 250, true};
-            keyFrames[1] = {pixels2, 250, true};
+            keyFrames[0] = {pixels1, g_delay, true};
+            keyFrames[1] = {pixels2, g_delay, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -406,8 +435,8 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
-            keyFrames[0] = {pixels1, 250, true};
-            keyFrames[1] = {pixels2, 250, true};
+            keyFrames[0] = {pixels1, g_delay, true};
+            keyFrames[1] = {pixels2, g_delay, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
@@ -423,9 +452,9 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, ARRAY_SIZE(pattern1));
             createRepeatingPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, ARRAY_SIZE(pattern2));
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
-            keyFrames[0] = {pixels1, 250, true};
-            keyFrames[1] = {pixels2, 250, true};
-            keyFrames[2] = {pixels3, 250, true};
+            keyFrames[0] = {pixels1, g_delay, true};
+            keyFrames[1] = {pixels2, g_delay, true};
+            keyFrames[2] = {pixels3, g_delay, true};
             animation.setKeyFrames(keyFrames, 3);
             g_pPixelUpdate = &animation;
             break;
@@ -447,11 +476,11 @@ static void updateAnimation()
             createRepeatingPixelPattern(pixels3, ARRAY_SIZE(pixels3), pattern3, ARRAY_SIZE(pattern3));
             createRepeatingPixelPattern(pixels4, ARRAY_SIZE(pixels4), pattern4, ARRAY_SIZE(pattern4));
             createRepeatingPixelPattern(pixels5, ARRAY_SIZE(pixels5), pattern5, ARRAY_SIZE(pattern5));
-            keyFrames[0] = {pixels1, 250, true};
-            keyFrames[1] = {pixels2, 250, true};
-            keyFrames[2] = {pixels3, 250, true};
-            keyFrames[3] = {pixels4, 250, true};
-            keyFrames[4] = {pixels5, 250, true};
+            keyFrames[0] = {pixels1, g_delay, true};
+            keyFrames[1] = {pixels2, g_delay, true};
+            keyFrames[2] = {pixels3, g_delay, true};
+            keyFrames[3] = {pixels4, g_delay, true};
+            keyFrames[4] = {pixels5, g_delay, true};
             animation.setKeyFrames(keyFrames, 5);
             g_pPixelUpdate = &animation;
             break;
@@ -464,16 +493,16 @@ static void updateAnimation()
             changeBrightness(pattern2, ARRAY_SIZE(pattern2), brightness);
             createInterpolatedPixelPattern(pixels1, ARRAY_SIZE(pixels1), pattern1, pattern2);
             createInterpolatedPixelPattern(pixels2, ARRAY_SIZE(pixels2), pattern2, pattern1);
-            keyFrames[0] = {pixels1, 1000, true};
-            keyFrames[1] = {pixels2, 1000, true};
+            keyFrames[0] = {pixels1, g_delay * 4, true};
+            keyFrames[1] = {pixels2, g_delay * 4, true};
             animation.setKeyFrames(keyFrames, 2);
             g_pPixelUpdate = &animation;
             break;
         }
     case Twinkle_White:
         {
-            twinkleProperties.lifetimeMin = 128;
-            twinkleProperties.lifetimeMax = 250;
+            twinkleProperties.lifetimeMin = g_delay / 2;
+            twinkleProperties.lifetimeMax = g_delay;
             twinkleProperties.probability = 250;
             twinkleProperties.hueMin = 0;
             twinkleProperties.hueMax = 0;
@@ -487,8 +516,8 @@ static void updateAnimation()
         }
     case Twinkle_Red:
         {
-            twinkleProperties.lifetimeMin = 128;
-            twinkleProperties.lifetimeMax = 250;
+            twinkleProperties.lifetimeMin = g_delay / 2;
+            twinkleProperties.lifetimeMax = g_delay;
             twinkleProperties.probability = 250;
             twinkleProperties.hueMin = 0;
             twinkleProperties.hueMax = 0;
@@ -502,8 +531,8 @@ static void updateAnimation()
         }
     case Twinkle_Green:
         {
-            twinkleProperties.lifetimeMin = 128;
-            twinkleProperties.lifetimeMax = 250;
+            twinkleProperties.lifetimeMin = g_delay / 2;
+            twinkleProperties.lifetimeMax = g_delay;
             twinkleProperties.probability = 250;
             twinkleProperties.hueMin = 84;
             twinkleProperties.hueMax = 84;
@@ -517,8 +546,8 @@ static void updateAnimation()
         }
     case Twinkle_AnyColor:
         {
-            twinkleProperties.lifetimeMin = 128;
-            twinkleProperties.lifetimeMax = 250;
+            twinkleProperties.lifetimeMin = g_delay / 2;
+            twinkleProperties.lifetimeMax = g_delay;
             twinkleProperties.probability = 250;
             twinkleProperties.hueMin = 0;
             twinkleProperties.hueMax = 255;
