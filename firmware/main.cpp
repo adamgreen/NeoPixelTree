@@ -612,7 +612,7 @@ static void updateAnimation()
         {
             flickerProperties.timeMin = 2;
             flickerProperties.timeMax = 3;
-            flickerProperties.stayBrightFactor = 2;
+            flickerProperties.stayBrightFactor = 100;
             flickerProperties.brightnessMin = brightness / 2;
             flickerProperties.brightnessMax = brightness;
             flickerProperties.baseRGBColour = DARK_ORANGE;

@@ -434,7 +434,7 @@ void FlickerAnimationBase::updatePixel(RGBData* pRgbDest,
         pInfo->hsvStart = *pHsv;
         pInfo->hsvStop = *pHsv;
 
-        // The brightness level should have a 2x chance of being brightest setting compared to other values.
+        // The brightness level should have a greater chance of being brightest setting compared to other values.
         uint32_t brightnessDelta = m_pProperties->brightnessMax - m_pProperties->brightnessMin;
         uint32_t randValue = posRand() % (m_pProperties->stayBrightFactor * brightnessDelta);
         pInfo->hsvStop.value = (randValue > brightnessDelta) ? m_pProperties->brightnessMax :
