@@ -214,6 +214,44 @@ protected:
 
 
 
+
+class RunningLightsAnimationBase : public IPixelUpdate
+{
+public:
+
+    void setProperties(const HSVData* pHSV, int32_t delayMilliseconds);
+
+    // IPixelUpdate methods.
+    virtual void updatePixels(NeoPixel& ledControl);
+
+protected:
+    RunningLightsAnimationBase();
+
+    RGBData*                 m_pRgbPixels;
+    size_t                   m_pixelCount;
+    size_t                   m_position;
+    Timer                    m_timer;
+    int32_t                  m_delay;
+    HSVData                  m_hsv;
+};
+
+template <size_t PIXEL_COUNT>
+class RunningLightsAnimation : public RunningLightsAnimationBase
+{
+public:
+    RunningLightsAnimation()
+    {
+        m_pixelCount = PIXEL_COUNT;
+        m_pRgbPixels = m_rgbPixels;
+    }
+
+protected:
+    RGBData          m_rgbPixels[PIXEL_COUNT];
+};
+
+
+
+
 static inline void createRepeatingPixelPattern(RGBData* pDest, size_t destPixelCount,
                                                const RGBData* pPattern, size_t srcPixelCount)
 {

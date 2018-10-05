@@ -60,6 +60,7 @@ enum Animations
     Twinkle_Red,
     Twinkle_Green,
     Twinkle_AnyColor,
+    Running_Lights,
     Candle_Flicker,
     Max_Animation
 };
@@ -217,6 +218,7 @@ static void updateAnimation()
     static TwinkleProperties           twinkleProperties;
     static FlickerAnimation<LED_COUNT> flicker;
     static FlickerProperties           flickerProperties;
+    static RunningLightsAnimation<LED_COUNT> runningLights;
     static RGBData                     pixels1[LED_COUNT];
     static RGBData                     pixels2[LED_COUNT];
     static RGBData                     pixels3[LED_COUNT];
@@ -557,6 +559,16 @@ static void updateAnimation()
             twinkleProperties.valueMax = brightness;
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
+            break;
+        }
+    case Running_Lights:
+        {
+            HSVData hsv;
+            hsv.hue = 0;
+            hsv.saturation = 0;
+            hsv.value = brightness;
+            runningLights.setProperties(&hsv, g_delay/4);
+            g_pPixelUpdate = &runningLights;
             break;
         }
     case Candle_Flicker:

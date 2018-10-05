@@ -431,6 +431,58 @@ void FlickerAnimationBase::updatePixel(RGBData* pRgbDest,
     }
 }
 
+
+
+
+// Running lights animation is derived from code at the following link:
+//   https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectRunningLights
+RunningLightsAnimationBase::RunningLightsAnimationBase()
+{
+    m_pRgbPixels = NULL;
+    m_pixelCount = 0;
+    m_position = 0;
+    m_delay = 0;
+    memset(&m_hsv, 0, sizeof(m_hsv));
+    m_timer.start();
+}
+
+void RunningLightsAnimationBase::setProperties(const HSVData* pHSV, int32_t delayMilliseconds)
+{
+    m_hsv = *pHSV;
+    m_delay = delayMilliseconds;
+    m_position = 0;
+    memset(m_pRgbPixels, 0, sizeof(*m_pRgbPixels) * m_pixelCount);
+    m_timer.reset();
+}
+
+void RunningLightsAnimationBase::updatePixels(NeoPixel& ledControl)
+{
+    int32_t currTime = m_timer.read_ms();
+    if (currTime < m_delay)
+    {
+        // Nothing to do at this time.
+        return;
+    }
+
+    HSVData hsv = m_hsv;
+    for (size_t i = 0 ; i < m_pixelCount ; i++)
+    {
+        uint8_t brightnessScale = 128 + (uint8_t)(sinf(m_position + i) * 127.0f);
+        hsv.value = ((uint16_t)m_hsv.value * brightnessScale) / 255;
+        hsvToRgb(&m_pRgbPixels[i], &hsv);
+    }
+    ledControl.set(m_pRgbPixels, m_pixelCount);
+
+    m_position++;
+    if (m_position >= m_pixelCount * 2)
+    {
+        m_position = 0;
+    }
+    m_timer.reset();
+}
+
+
+
 void changeBrightness(RGBData* pPattern, size_t srcPixelCount, uint8_t brightnessFactor)
 {
     while (srcPixelCount--)
