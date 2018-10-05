@@ -60,6 +60,7 @@ enum Animations
     Twinkle_Red,
     Twinkle_Green,
     Twinkle_AnyColor,
+    Twinkle_Snow,
     Running_Lights,
     Candle_Flicker,
     Max_Animation
@@ -512,6 +513,7 @@ static void updateAnimation()
             twinkleProperties.saturationMax = 0;
             twinkleProperties.valueMin = brightness / 2;
             twinkleProperties.valueMax = brightness;
+            twinkleProperties.hsvBackground = HSVData(0, 0, 0);
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -527,6 +529,7 @@ static void updateAnimation()
             twinkleProperties.saturationMax = 255;
             twinkleProperties.valueMin = brightness / 2;
             twinkleProperties.valueMax = brightness;
+            twinkleProperties.hsvBackground = HSVData(0, 255, 0);
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -542,6 +545,7 @@ static void updateAnimation()
             twinkleProperties.saturationMax = 255;
             twinkleProperties.valueMin = brightness / 2;
             twinkleProperties.valueMax = brightness;
+            twinkleProperties.hsvBackground = HSVData(84, 255, 0);
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;
@@ -557,6 +561,23 @@ static void updateAnimation()
             twinkleProperties.saturationMax = 255;
             twinkleProperties.valueMin = brightness / 2;
             twinkleProperties.valueMax = brightness;
+            twinkleProperties.hsvBackground = HSVData(0, 0, 0);
+            twinkle.setProperties(&twinkleProperties);
+            g_pPixelUpdate = &twinkle;
+            break;
+        }
+    case Twinkle_Snow:
+        {
+            twinkleProperties.lifetimeMin = g_delay / 2;
+            twinkleProperties.lifetimeMax = g_delay;
+            twinkleProperties.probability = 250;
+            twinkleProperties.hueMin = 0;
+            twinkleProperties.hueMax = 0;
+            twinkleProperties.saturationMin = 0;
+            twinkleProperties.saturationMax = 0;
+            twinkleProperties.valueMin = brightness / 2;
+            twinkleProperties.valueMax = brightness;
+            twinkleProperties.hsvBackground = HSVData(0x00, 0x00, brightness >= 10 ? brightness / 10 : 1);
             twinkle.setProperties(&twinkleProperties);
             g_pPixelUpdate = &twinkle;
             break;

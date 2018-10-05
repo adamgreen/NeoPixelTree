@@ -94,6 +94,8 @@ struct TwinkleProperties
     uint32_t lifetimeMax;
     // There should be a 1 in probability milliseconds chance of a twinkle starting.
     int      probability;
+    // Background colour of the LEDs when not actively twinkling.
+    HSVData  hsvBackground;
     // The colour of the twinkling LED should be constrained to these HSV limits.
     uint8_t  hueMin;
     uint8_t  hueMax;
@@ -120,6 +122,7 @@ protected:
         uint32_t startTime;
         uint32_t lifetime;
         bool     isGettingBrighter;
+        HSVData  hsvStart;
     };
     void twinklePixel(RGBData* pRgbDest, const HSVData* pHsv, PixelTwinkleInfo* pInfo, uint32_t currTime);
 

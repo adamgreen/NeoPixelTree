@@ -218,7 +218,12 @@ TwinkleAnimationBase::TwinkleAnimationBase()
 void TwinkleAnimationBase::setProperties(const TwinkleProperties* pProperties)
 {
     m_pProperties = pProperties;
-    memset(m_pRgbPixels, 0, sizeof(*m_pRgbPixels) * m_pixelCount);
+    RGBData rgb;
+    hsvToRgb(&rgb, &pProperties->hsvBackground);
+    for (size_t i = 0 ; i < m_pixelCount ; i++)
+    {
+        m_pRgbPixels[i] = rgb;
+    }
     memset(m_pHsvPixels, 0, sizeof(*m_pHsvPixels) * m_pixelCount);
     memset(m_pTwinkleInfo, 0, sizeof(*m_pTwinkleInfo) * m_pixelCount);
 
@@ -277,13 +282,23 @@ void TwinkleAnimationBase::updatePixels(NeoPixel& ledControl)
 
     pHsvPixel->hue = m_pProperties->hueMin + (hueDelta ? posRand() % hueDelta : 0);
     pHsvPixel->saturation = m_pProperties->saturationMin + (saturationDelta ? posRand() % saturationDelta : 0);
-    pHsvPixel->value = m_pProperties->valueMin + (valueDelta ? posRand() % valueDelta : 0);
+    pHsvPixel->value = g_logTable[m_pProperties->valueMin + (valueDelta ? posRand() % valueDelta : 0)];
 
     // Set RGB pixel value to match starting colour.
-    HSVData hsvStart = *pHsvPixel;
-    hsvStart.value = 8;
-    pRgbPixel = &m_pRgbPixels[pixelToTwinkle];
-    hsvToRgb(pRgbPixel, &hsvStart);
+    if (m_pProperties->hsvBackground.hue == 0 &&
+        m_pProperties->hsvBackground.saturation == 0 &&
+        m_pProperties->hsvBackground.value == 0)
+    {
+        // Start with same colour as the stop colour but with a brightness of 0.
+        pInfo->hsvStart = *pHsvPixel;
+        pInfo->hsvStart.value = 0;
+    }
+    else
+    {
+        pInfo->hsvStart = m_pProperties->hsvBackground;
+    }
+    hsvToRgb(pRgbPixel, &pInfo->hsvStart);
+    pInfo->hsvStart.value = g_logTable[pInfo->hsvStart.value];
 
     ledControl.set(m_pRgbPixels, m_pixelCount);
 }
@@ -316,9 +331,8 @@ void TwinkleAnimationBase::twinklePixel(RGBData* pRgbDest,
         }
         else
         {
-            HSVData hsvStart = *pHsv;
+            HSVData hsvStart = pInfo->hsvStart;
             HSVData hsvStop = *pHsv;
-            hsvStart.value = 8;
             AnimationBase::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
         }
     }
@@ -329,14 +343,13 @@ void TwinkleAnimationBase::twinklePixel(RGBData* pRgbDest,
     {
         if (deltaTime > pInfo->lifetime)
         {
-            // The twinkle is complete so flag it as being so and turn LED off.
+            // The twinkle is complete so flag it as being so and set LED back to background colour.
             pInfo->lifetime = 0;
-            *pRgbDest = { 0, 0, 0 };
+            hsvToRgb(pRgbDest, &m_pProperties->hsvBackground);
             return;
         }
         HSVData hsvStart = *pHsv;
-        HSVData hsvStop = *pHsv;
-        hsvStop.value = 8;
+        HSVData hsvStop = pInfo->hsvStart;
         AnimationBase::interpolateHsvToRgb(pRgbDest, &hsvStart, &hsvStop, deltaTime, pInfo->lifetime);
     }
 }

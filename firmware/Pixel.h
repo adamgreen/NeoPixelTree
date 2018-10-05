@@ -32,6 +32,13 @@ struct HSVData
     uint8_t hue;
     uint8_t saturation;
     uint8_t value;
+
+    HSVData(int h, int s, int v) : hue(h), saturation(s), value(v)
+    {
+    }
+    HSVData() : hue(0), saturation(0), value(0)
+    {
+    }
 };
 
 
