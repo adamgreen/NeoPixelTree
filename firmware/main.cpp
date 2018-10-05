@@ -62,6 +62,7 @@ enum Animations
     Twinkle_AnyColor,
     Twinkle_Snow,
     Running_Lights,
+    Meteor,
     Candle_Flicker,
     Max_Animation
 };
@@ -220,6 +221,8 @@ static void updateAnimation()
     static FlickerAnimation<LED_COUNT> flicker;
     static FlickerProperties           flickerProperties;
     static RunningLightsAnimation<LED_COUNT> runningLights;
+    static MeteorProperties            meteorProperties;
+    static MeteorAnimation<LED_COUNT>  meteor;
     static RGBData                     pixels1[LED_COUNT];
     static RGBData                     pixels2[LED_COUNT];
     static RGBData                     pixels3[LED_COUNT];
@@ -590,6 +593,19 @@ static void updateAnimation()
             hsv.value = brightness;
             runningLights.setProperties(&hsv, g_delay/4);
             g_pPixelUpdate = &runningLights;
+            break;
+        }
+    case Meteor:
+        {
+            meteorProperties.brightColor.red = brightness;
+            meteorProperties.brightColor.green = brightness;
+            meteorProperties.brightColor.blue = brightness;
+            meteorProperties.size = 10;
+            meteorProperties.trailDecay = 64;
+            meteorProperties.isDecayRandom = true;
+            meteorProperties.delay = g_delay / 5;
+            meteor.setProperties(&meteorProperties);
+            g_pPixelUpdate = &meteor;
             break;
         }
     case Candle_Flicker:

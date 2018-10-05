@@ -254,6 +254,58 @@ protected:
 
 
 
+struct MeteorProperties
+{
+    // Time delay between iterations of the animation in milliseconds.
+    uint32_t delay;
+    // Should the trail decay be random?
+    bool     isDecayRandom;
+    // The colour to light the pixel when at maximum brightness.
+    RGBData  brightColor;
+    // Size of meteor blob in pixels.
+    uint8_t  size;
+    // Amount to scale down brightness of tail as a ratio out of 256.
+    uint8_t  trailDecay;
+};
+
+class MeteorAnimationBase : public IPixelUpdate
+{
+public:
+
+    void setProperties(const MeteorProperties* pProperties);
+
+    // IPixelUpdate methods.
+    virtual void updatePixels(NeoPixel& ledControl);
+
+protected:
+    MeteorAnimationBase();
+
+    void fadeToBlack(size_t led, uint8_t trailDecay);
+
+    const MeteorProperties*  m_pProperties;
+    RGBData*                 m_pRgbPixels;
+    size_t                   m_pixelCount;
+    uint32_t                 m_iteration;
+    Timer                    m_timer;
+};
+
+template <size_t PIXEL_COUNT>
+class MeteorAnimation : public MeteorAnimationBase
+{
+public:
+    MeteorAnimation()
+    {
+        m_pixelCount = PIXEL_COUNT;
+        m_iteration = PIXEL_COUNT * 2;
+        m_pRgbPixels = m_rgbPixels;
+    }
+
+protected:
+    RGBData          m_rgbPixels[PIXEL_COUNT];
+};
+
+
+
 
 static inline void createRepeatingPixelPattern(RGBData* pDest, size_t destPixelCount,
                                                const RGBData* pPattern, size_t srcPixelCount)

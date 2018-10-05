@@ -496,6 +496,81 @@ void RunningLightsAnimationBase::updatePixels(NeoPixel& ledControl)
 
 
 
+
+// Meteor animation is derived from code at the following link:
+//   https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectMeteorRain
+// When performed on the tree from top to bottom, it looks a bit like snow fall.
+MeteorAnimationBase::MeteorAnimationBase()
+{
+    m_pProperties = NULL;
+    m_pRgbPixels = NULL;
+    m_pixelCount = 0;
+    m_iteration = 0;
+    m_timer.start();
+}
+
+void MeteorAnimationBase::setProperties(const MeteorProperties* pProperties)
+{
+    m_pProperties = pProperties;
+    m_timer.reset();
+}
+
+void MeteorAnimationBase::updatePixels(NeoPixel& ledControl)
+{
+    uint32_t currTime = m_timer.read_ms();
+    if (currTime < m_pProperties->delay)
+    {
+        // Need to delay more before updating animation pixel state.
+        return;
+    }
+    m_timer.reset();
+
+    // Fade brightness of each trail pixel.
+    for (size_t j = 0 ; j < m_pixelCount ; j++)
+    {
+        if (!m_pProperties->isDecayRandom || rand()%10 > 5)
+        {
+            fadeToBlack(j, m_pProperties->trailDecay);
+        }
+    }
+
+    // Draw the meteor.
+    for (size_t j = 0; j < m_pProperties->size; j++)
+    {
+        if (m_iteration - j < m_pixelCount)
+        {
+            m_pRgbPixels[m_iteration - j] = m_pProperties->brightColor;
+        }
+    }
+
+    // Advance to next iteration of the animation.
+    if (m_iteration == 0)
+    {
+        // Start animation over again.
+        m_iteration = m_pixelCount * 2;
+    }
+    else
+    {
+        m_iteration--;
+    }
+
+    ledControl.set(m_pRgbPixels, m_pixelCount);
+}
+
+void MeteorAnimationBase::fadeToBlack(size_t led, uint8_t trailDecay)
+{
+    RGBData rgb = m_pRgbPixels[led];
+
+    rgb.red   = rgb.red   <= 10 ? 0 : rgb.red   - (rgb.red   * trailDecay/256);
+    rgb.green = rgb.green <= 10 ? 0 : rgb.green - (rgb.green * trailDecay/256);
+    rgb.blue  = rgb.blue  <= 10 ? 0 : rgb.blue  - (rgb.blue  * trailDecay/256);
+
+    m_pRgbPixels[led] = rgb;
+}
+
+
+
+
 void changeBrightness(RGBData* pPattern, size_t srcPixelCount, uint8_t brightnessFactor)
 {
     while (srcPixelCount--)
