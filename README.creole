@@ -1,8 +1,8 @@
 ==Overview
-{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160401-02.GIF}}\\
-I like to think of this project as a Charlie Brown's Christmas tree with
-[[https://www.adafruit.com/products/1938 | NeoPixels]]. There won't be any evergreen with this tree.  It will just be
-copper wire branches with RGB NeoPixel LEDs on the ends.
+{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20181011-01.gif}}\\
+I like to think of this project as a Charlie Brown Christmas tree with
+[[https://www.adafruit.com/products/1938 | NeoPixels]]. There isn't any evergreen with this tree.  It is just ribbon 
+cable branches with RGB NeoPixel LEDs.
 
 
 
@@ -15,7 +15,25 @@ git clone --recursive git@github.com:adamgreen/NeoPixelTree.git
 
 
 
+==Final Version
+It might have taken me a few years but I did finally finish this project on October 11th 2018. The final version increased
+the number of LEDs from 5 to 50, added a wooden base to hide the electronics, added an inline fuse holder on the main 5V
+supply line, and added 3 rotary encoders to change the animation, speed, and brightness. I created custom PCBs to distribute
+the power and data signals from the tree trunk to each LED on a particular level of the tree. The LEDs were also mounted on
+custom PCBs. 4-wire ribbon cable (solid conductor) was used to run between these PCBs to form the branches. The PCB designs
+can be found in the 
+[[https://github.com/adamgreen/NeoPixelTree/tree/master/hardware | hardware/ folder]].
+
+If I was to do something like this again, I would just use a small artificial tree and something like 
+[[https://www.amazon.com/WESIRI-Diffused-Individually-Addressable-Waterproof/dp/B075T84ZR3 | these premade LED sets]].
+I would then add my custom electronics and firmware to control the premade LED set. The current version isn't as robust as I
+would like. The ribbon cable isn't stiff enough to hold up the LEDs on the longest branches and the tree trunk needed to be
+reinforced with wooden dowels.
+
+
+
 ==5 NeoPixel Prototype
+{{https://raw.githubusercontent.com/adamgreen/NeoPixelTree/master/images/20160401-02.GIF}}\\
 As of April 1st, 2016, I am just at the prototyping stage with five
 [[https://www.adafruit.com/products/1938 | 5mm NeoPixel LEDs]]. This gives me an opportunity to implement and test
 driver code for the WS2812 on the [[https://developer.mbed.org/platforms/mbed-LPC1768/ | mbed LPC1768]]. It also allows
