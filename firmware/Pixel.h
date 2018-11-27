@@ -68,8 +68,10 @@ static inline void hsvToRgb(RGBData* pRGB, const HSVData* pHSV)
         return;
     }
 
+    // NOTE: Using floating point in remainder calculation to reduce rounding error and make HSV <-> RGB conversions
+    //       as reversible as possible.
     uint32_t region = hue / 43;
-    uint32_t remainder = (hue - (region * 43)) * 6;
+    uint32_t remainder = (uint32_t)((float)(hue - (region * 43))) * 6.071428571428571f;
 
     uint32_t p = (value * (255 - saturation)) >> 8;
     uint32_t q = (value * (255 - ((saturation * remainder) >> 8))) >> 8;
