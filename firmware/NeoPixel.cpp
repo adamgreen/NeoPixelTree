@@ -31,8 +31,9 @@ NeoPixel::NeoPixel(uint32_t ledCount, PinName outputPin) : SPI(outputPin, NC, NC
     // Each NeoPixel data-bit should be 1.2 usec so use 12 SPI bits when running SPI at 10MHz.
     const uint32_t spiBitsPerNeoPixelBit = 12;
     const uint32_t bitsPerPixel = 24;
-    // 500 * 1/10MHz = 50 usec.
-    const uint32_t resetBits = 500;
+    // 3000 * 1/10MHz = 300 usec.
+    // The spec says 50usec is required but it didn't work and Adafruit's library uses 300usec and that got it to work.
+    const uint32_t resetBits = 3000;
 
     format(8, 3);
     frequency(10000000);
